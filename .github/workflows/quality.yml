@@ -29,7 +29,7 @@ jobs:
           cache: maven
 
       - name: Executar verificação completa
-        run: ./mvnw -B clean verify
+        run: mvn -B clean verify
 
       - name: Publicar relatórios
         if: always()
