@@ -1,0 +1,35 @@
+name: Relato de defeito
+description: Registrar uma falha reproduzível e segura
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Versão, ambiente e pré-condições
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos mínimos para reproduzir
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Resultado obtido
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidências sanitizadas
+      description: Não inclua senha, token, matrícula ou dado pessoal.
+

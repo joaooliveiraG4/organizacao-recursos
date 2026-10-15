@@ -1,0 +1,40 @@
+name: Tarefa do projeto
+description: Planejar uma fatia rastreável do sistema
+title: "[RF-XX] "
+labels: ["feature"]
+body:
+  - type: dropdown
+    id: owner
+    attributes:
+      label: Responsável
+      options: [João, Miranda, Kauã]
+    validations:
+      required: true
+  - type: input
+    id: requirement
+    attributes:
+      label: Requisito
+      placeholder: RF-XX ou RNF-XX
+    validations:
+      required: true
+  - type: textarea
+    id: value
+    attributes:
+      label: Problema e valor
+      description: Quem se beneficia e qual problema será resolvido?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite
+      description: Liste comportamentos observáveis e mensuráveis.
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risco e estratégia de teste
+    validations:
+      required: true
+
