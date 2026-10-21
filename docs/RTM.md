@@ -5,7 +5,7 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | Requisito | Risco principal | Critério/caso | Teste automatizado | Evidência | Status |
 |---|---|---|---|---|---|
 | RF-01 | acesso com perfil indevido | perfis negam operações não autorizadas | a criar | a criar | pendente |
-| RF-02 | recurso inválido ou duplicado | cadastro e consulta preservam invariantes | a criar | a criar | pendente |
+| RF-02 (salas) | recurso inválido ou duplicado | cadastro/consulta; capacidade positiva; código único sem diferenciar maiúsculas/minúsculas | `SalaServiceTest`, `SalaControllerTest`, `SalaApiIntegrationTest` | `.\mvnw.cmd clean verify`: BUILD SUCCESS; 13 testes passaram e 3 de Testcontainers foram pulados localmente por falta de Docker; CI da PR pendente | pendente de CI/Testcontainers |
 | RF-03 | disponibilidade incorreta | filtros retornam apenas recursos compatíveis | a criar | a criar | pendente |
 | RF-04 | alteração/cancelamento em estado proibido | transições respeitam regras | a criar | a criar | pendente |
 | RF-05 | sobreposição de agenda | sala, material e professor não se sobrepõem | a criar | a criar | crítico/pendente |
@@ -19,4 +19,3 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | RF-13 | erro inseguro/incompreensível | validações retornam mensagem neutra | a criar | a criar | pendente |
 | RF-14 | consumidor não reproduz fluxo | contrato e README permitem execução | a criar | a criar | pendente |
 | RNF-QUAL-01 | defeitos, vulnerabilidades ou duplicações chegarem à `main` | toda PR executa testes, cobertura JaCoCo e Quality Gate do SonarCloud | `.github/workflows/quality.yml` e análise automática do SonarCloud | [PR #1: checks e Quality Gate](https://github.com/joaooliveiraG4/organizacao-recursos/pull/1) | aprovado na PR #1 |
-

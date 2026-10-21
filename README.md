@@ -50,8 +50,8 @@ Relatórios:
 - [Plano de recuperação](docs/plano-recuperacao-semana-42.md)
 - [Matriz de rastreabilidade](docs/RTM.md)
 - [Plano de testes](docs/testes/plano-de-testes.md)
+- [Contrato da API de salas](docs/contratos/salas.md)
 - [Arquitetura](docs/arquitetura/README.md)
 - [Prompts da equipe](docs/prompts-da-equipe.md)
 
 Material oficial da disciplina: https://afonsolelis.github.io/aulas_senac/pages/home_qualidade_2026_2.html
-
