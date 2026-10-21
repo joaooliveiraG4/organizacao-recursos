@@ -5,7 +5,7 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | Requisito | Risco principal | Critério/caso | Teste automatizado | Evidência | Status |
 |---|---|---|---|---|---|
 | RF-01 | acesso com perfil indevido | perfis negam operações não autorizadas | a criar | a criar | pendente |
-| RF-02 (salas) | recurso inválido ou duplicado | cadastro/consulta; capacidade positiva; código único sem diferenciar maiúsculas/minúsculas | `SalaServiceTest`, `SalaControllerTest`, `SalaApiIntegrationTest` | `mvnw.cmd clean verify`: BUILD SUCCESS no commit da contribuição; 13 testes passaram e 3 testes Testcontainers foram pulados por falta de Docker local; [CI da PR #2](https://github.com/joaooliveiraG4/organizacao-recursos/actions/runs/39631485086) pendente | pendente de CI/Testcontainers |
+| RF-02 (salas) | recurso inválido ou duplicado | cadastro/consulta; capacidade positiva; código único sem diferenciar maiúsculas/minúsculas | `SalaServiceTest`, `SalaControllerTest`, `SalaApiIntegrationTest` | [CI da PR #2](https://github.com/joaooliveiraG4/organizacao-recursos/actions/runs/39631608029): `clean verify` passou no commit `b775487196a5e396b8e1792b6dcfb7a3bdb845c3`; 16 testes passaram, incluindo 3 Testcontainers; JaCoCo aprovou os gates | aprovado no commit validado |
 | RF-03 | disponibilidade incorreta | filtros retornam apenas recursos compatíveis | a criar | a criar | pendente |
 | RF-04 | alteração/cancelamento em estado proibido | transições respeitam regras | a criar | a criar | pendente |
 | RF-05 | sobreposição de agenda | sala, material e professor não se sobrepõem | a criar | a criar | crítico/pendente |
