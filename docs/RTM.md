@@ -13,7 +13,7 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | RF-07 | aprovação por usuário indevido | somente Responsável aprova restrito | a criar | a criar | crítico/pendente |
 | RF-08 | manutenção ignorada | recurso bloqueado não pode ser reservado | a criar | a criar | pendente |
 | RF-09 | perda de controle de material | retirada/devolução mantém estado coerente | a criar | a criar | pendente |
-| RF-10 | mudança sem autoria/histórico | cada transição gera auditoria | a criar | a criar | pendente |
+| RF-10 | mudança sem autoria/histórico | evento com tipo, registro, ação, autor obrigatório (inclusive Sistema) e horário; gravado só na transação da mudança (tudo ou nada); banco recusa UPDATE/DELETE/TRUNCATE; histórico em ordem; sem dados pessoais nos detalhes ([ADR 0003](adr/0003-auditoria-transacional-e-imutavel.md)) | `AuditoriaIntegrationTest` (Testcontainers), `AuditoriaServiceTest` (parametrizado) | local: `mvnw clean verify` com 15 testes passando e 0 pulados, incluindo 7 Testcontainers; JaCoCo aprovado; mutação (`MANDATORY` → `REQUIRED`) reprovou `registrarForaDeUmaTransacaoEhRecusado`. CI: pendente | parcial: serviço e garantias prontos; uso nas transições de reserva e endpoint de consulta pendentes |
 | RF-11 | provedor externo degrada sistema | timeout/erro gera resposta controlada | a criar | a criar | pendente |
 | RF-12 | relatório diverge das reservas | totais conferem com dados persistidos | a criar | a criar | pendente |
 | RF-13 | erro inseguro/incompreensível | validações retornam mensagem neutra | a criar | a criar | pendente |

@@ -51,6 +51,7 @@ Relatórios:
 - [Matriz de rastreabilidade](docs/RTM.md)
 - [Plano de testes](docs/testes/plano-de-testes.md)
 - [Arquitetura](docs/arquitetura/README.md)
+- [ADR 0003 — auditoria transacional e imutável](docs/adr/0003-auditoria-transacional-e-imutavel.md)
 - [Prompts da equipe](docs/prompts-da-equipe.md)
 
 Material oficial da disciplina: https://afonsolelis.github.io/aulas_senac/pages/home_qualidade_2026_2.html
