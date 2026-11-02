@@ -18,5 +18,6 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | RF-12 | relatório diverge das reservas | totais conferem com dados persistidos | a criar | a criar | pendente |
 | RF-13 | erro inseguro/incompreensível | validações retornam mensagem neutra | a criar | a criar | pendente |
 | RF-14 | consumidor não reproduz fluxo | contrato e README permitem execução | a criar | a criar | pendente |
+| RF-02 (professores) | professor inválido/duplicado ou migration fora de ordem | cadastrar/listar/consultar; código único; nome e competência obrigatórios | `ProfessorServiceTest`, `ProfessorControllerTest`, `ProfessorMaterialApiIntegrationTest` | `.\mvnw.cmd clean verify`: BUILD SUCCESS; 25 testes passaram e 6 Testcontainers foram pulados por falta de Docker; CI da PR pendente | pendente de CI e da PR #2 |
+| RF-02 (materiais) | material inválido/duplicado ou migration fora de ordem | cadastrar/listar/consultar; código único; quantidade positiva | `MaterialServiceTest`, `MaterialControllerTest`, `ProfessorMaterialApiIntegrationTest` | `.\mvnw.cmd clean verify`: BUILD SUCCESS; 25 testes passaram e 6 Testcontainers foram pulados por falta de Docker; CI da PR pendente | pendente de CI e da PR #2 |
 | RNF-QUAL-01 | defeitos, vulnerabilidades ou duplicações chegarem à `main` | toda PR executa testes, cobertura JaCoCo e Quality Gate do SonarCloud | `.github/workflows/quality.yml` e análise automática do SonarCloud | [PR #1: checks e Quality Gate](https://github.com/joaooliveiraG4/organizacao-recursos/pull/1) | aprovado na PR #1 |
-
