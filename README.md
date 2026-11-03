@@ -53,5 +53,6 @@ Relatórios:
 - [Contrato da API de salas](docs/contratos/salas.md)
 - [Arquitetura](docs/arquitetura/README.md)
 - [Prompts da equipe](docs/prompts-da-equipe.md)
+- [Contrato da API de professores e materiais](docs/contratos/professores-e-materiais.md)
 
 Material oficial da disciplina: https://afonsolelis.github.io/aulas_senac/pages/home_qualidade_2026_2.html
