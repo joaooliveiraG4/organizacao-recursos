@@ -53,6 +53,6 @@ Relatórios:
 - [Arquitetura](docs/arquitetura/README.md)
 - [ADR 0003 — auditoria transacional e imutável](docs/adr/0003-auditoria-transacional-e-imutavel.md)
 - [Prompts da equipe](docs/prompts-da-equipe.md)
+- [Contrato da API de professores e materiais](docs/contratos/professores-e-materiais.md)
 
 Material oficial da disciplina: https://afonsolelis.github.io/aulas_senac/pages/home_qualidade_2026_2.html
-
