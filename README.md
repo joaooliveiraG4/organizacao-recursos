@@ -74,6 +74,6 @@ Relatórios:
 - [Arquitetura](docs/arquitetura/README.md)
 - [ADR 0002 — autenticação e perfis](docs/adr/0002-autenticacao-e-perfis.md)
 - [Prompts da equipe](docs/prompts-da-equipe.md)
+- [Contrato da API de professores e materiais](docs/contratos/professores-e-materiais.md)
 
 Material oficial da disciplina: https://afonsolelis.github.io/aulas_senac/pages/home_qualidade_2026_2.html
-
