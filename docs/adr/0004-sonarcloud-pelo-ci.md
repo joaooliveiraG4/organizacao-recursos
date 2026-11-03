@@ -11,7 +11,7 @@ A análise automática do SonarCloud não executa o build e não lê o relatóri
 
 ## Decisão
 
-- A análise passa a rodar no GitHub Actions, depois de `mvn clean verify`, com `mvn sonar:sonar`, enviando `target/site/jacoco/jacoco.xml`.
+- A análise passa a rodar no GitHub Actions, depois de `mvn clean verify`, com `mvn sonar:sonar -Dsonar.qualitygate.wait=true`, enviando `target/site/jacoco/jacoco.xml`. O passo espera o resultado do Quality Gate: gate reprovado deixa o CI vermelho.
 - A configuração fica no `pom.xml` (o scanner Maven não lê `sonar-project.properties`, que foi removido para não haver duas fontes).
 - `sonar.coverage.exclusions` repete as exclusões do gate do JaCoCo (classe `main` e `config/**`).
 - O passo só roda quando o segredo `SONAR_TOKEN` existe; sem ele, o CI continua verde e só o JaCoCo vale.

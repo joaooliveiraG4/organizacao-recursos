@@ -38,9 +38,10 @@ jobs:
 
       # Envia a análise com o relatório do JaCoCo. Fica desligada até existir o
       # segredo SONAR_TOKEN e a análise automática ser desativada no SonarCloud.
+      # Espera o resultado do Quality Gate: gate reprovado deixa o CI vermelho.
       - name: Analisar no SonarCloud com cobertura
         if: env.SONAR_TOKEN != ''
-        run: mvn -B sonar:sonar
+        run: mvn -B sonar:sonar -Dsonar.qualitygate.wait=true
 
       - name: Publicar relatórios
         if: always()
