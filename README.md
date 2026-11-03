@@ -22,6 +22,15 @@ docker compose up -d
 
 Verifique `http://localhost:8080/api/v1/status` e `http://localhost:8080/actuator/health`.
 
+### Banco local com migrations fora de ordem
+
+Se a aplicação não subir com erro do Flyway como `Detected resolved migration not applied to database`, o banco local recebeu uma migration de número maior antes de uma menor (por exemplo, rodou a V3 antes de a V2 entrar na `main`). Em ambiente local, recrie o banco; os dados são apagados:
+
+```powershell
+docker compose down -v
+docker compose up -d
+```
+
 ## Fluxo da equipe
 
 1. Clone o repositório e abra sua raiz no VS Code/Codex.

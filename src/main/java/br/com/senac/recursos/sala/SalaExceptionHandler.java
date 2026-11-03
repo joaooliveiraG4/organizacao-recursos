@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "br.com.senac.recursos.sala")
 class SalaExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(SalaJaCadastradaException.class)
