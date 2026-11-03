@@ -1,4 +1,4 @@
--- V4: V2 (salas) e V3 (senha de usuário) estão reservadas por outras branches.
+-- V4: V2 (salas), V3 (professores e materiais) e V5 (senha de usuário) estão em outras PRs.
 
 -- Todo evento tem autor; ações automáticas usam o autor técnico "Sistema"
 -- (00000000-0000-0000-0000-000000000000).
