@@ -17,9 +17,14 @@ jobs:
     name: build-test-coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - name: Obter código
         uses: actions/checkout@v4
+        with:
+          # Histórico completo para o SonarCloud identificar o código novo da PR.
+          fetch-depth: 0
 
       - name: Configurar Java 21
         uses: actions/setup-java@v4
@@ -30,6 +35,12 @@ jobs:
 
       - name: Executar verificação completa
         run: mvn -B clean verify
+
+      # Envia a análise com o relatório do JaCoCo. Fica desligada até existir o
+      # segredo SONAR_TOKEN e a análise automática ser desativada no SonarCloud.
+      - name: Analisar no SonarCloud com cobertura
+        if: env.SONAR_TOKEN != ''
+        run: mvn -B sonar:sonar
 
       - name: Publicar relatórios
         if: always()

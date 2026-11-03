@@ -43,7 +43,7 @@ Relatórios:
 
 - testes: `target/surefire-reports` e `target/failsafe-reports`;
 - cobertura: `target/site/jacoco/index.html`.
-- análise estática: [painel do projeto no SonarCloud](https://sonarcloud.io/project/overview?id=joaooliveiraG4_organizacao-recursos), executada automaticamente em pushes e pull requests.
+- análise estática: [painel do projeto no SonarCloud](https://sonarcloud.io/project/overview?id=joaooliveiraG4_organizacao-recursos), executada pelo GitHub Actions após `clean verify`, com a cobertura do JaCoCo ([ADR 0004](docs/adr/0004-sonarcloud-pelo-ci.md)).
 
 ## Documentação
 
