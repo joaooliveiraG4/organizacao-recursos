@@ -12,7 +12,7 @@ A fundação usava o usuário padrão do Spring Security, com senha aleatória e
 ## Decisão
 
 - Perfis fixos: `SOLICITANTE`, `RESPONSAVEL`, `ADMINISTRADOR` (`Perfil`), gravados em `app_user.role`.
-- Autenticação HTTP Basic, sem sessão (`STATELESS`), contra `app_user` com senha em BCrypt (`password_hash`, migration V3).
+- Autenticação HTTP Basic, sem sessão (`STATELESS`), contra `app_user` com senha em BCrypt (`password_hash`, migration V5).
 - Autorização **negada por padrão**: só `/api/v1/status` e `/actuator/health` são públicos.
 - Catálogo (`/api/v1/salas`, `/professores`, `/materiais`): leitura para qualquer perfil autenticado; escrita somente para `ADMINISTRADOR` (decisão do João em 2026-10-27).
 - `@EnableMethodSecurity` ativo para regras por operação, por exemplo `@PreAuthorize("hasRole('RESPONSAVEL')")` na aprovação de recurso restrito (RF-07).
