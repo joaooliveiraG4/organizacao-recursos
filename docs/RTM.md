@@ -9,10 +9,10 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | RF-03 | disponibilidade incorreta | filtros retornam apenas recursos compatíveis | a criar | a criar | pendente |
 | RF-04 | alteração/cancelamento em estado proibido | transições respeitam regras | a criar | a criar | pendente |
 | RF-05 | sobreposição de agenda | sala, material e professor não se sobrepõem | a criar | a criar | crítico/pendente |
-| RF-06 | dupla reserva concorrente | apenas uma solicitação simultânea é aceita | a criar | a criar | crítico/pendente |
+| RF-06 | dupla reserva concorrente | uma reserva aceita, N-1 conflitos, zero erros e uma persistida | JMX parametrizado e avaliador HTTP; concorrência real ainda a executar | [Plano](../performance/README.md), [modelo de relatório](testes/relatorio-carga-modelo.md); 12 testes sintéticos do avaliador, sem prova da API | crítico/pendente: ferramenta preparada; API/banco/JMeter pendentes |
 | RF-07 | aprovação por usuário indevido | somente Responsável aprova restrito | a criar | a criar | crítico/pendente |
 | RF-08 | manutenção ignorada | recurso bloqueado não pode ser reservado | a criar | a criar | pendente |
-| RF-09 | perda de controle de material | retirada/devolução mantém estado coerente | a criar | a criar | pendente |
+| RF-09 | perda de controle de material | retirada/devolução mantém estado e auditoria coerentes | cenários U01–U07 preparados; implementação depende de decisões e reservas | [Roteiro de QA](testes/qa-utilizacao-e-concorrencia.md); cenários não executados | pendente: autorização, transições/repetição e API a confirmar |
 | RF-10 | mudança sem autoria/histórico | cada transição gera auditoria | a criar | a criar | pendente |
 | RF-11 | provedor externo degrada sistema | timeout/erro gera resposta controlada | a criar | a criar | pendente |
 | RF-12 | relatório diverge das reservas | totais conferem com dados persistidos | a criar | a criar | pendente |

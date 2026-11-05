@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+<hashTree>
+ <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="RF-06 - disputa controlada" enabled="true">
+  <boolProp name="TestPlan.functional_mode">false</boolProp>
+  <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+  <elementProp name="TestPlan.user_defined_variables" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
+ </TestPlan>
+ <hashTree>
+  <SetupThreadGroup guiclass="SetupThreadGroupGui" testclass="SetupThreadGroup" testname="Preparar" enabled="true">
+   <stringProp name="ThreadGroup.on_sample_error">stoptest</stringProp>
+   <elementProp name="ThreadGroup.main_controller" elementType="LoopController"><boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">1</stringProp></elementProp>
+   <stringProp name="ThreadGroup.num_threads">1</stringProp><stringProp name="ThreadGroup.ramp_time">0</stringProp>
+  </SetupThreadGroup>
+  <hashTree>
+   <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Preparar" enabled="true">
+    <stringProp name="scriptLanguage">groovy</stringProp><stringProp name="cacheKey">true</stringProp>
+    <stringProp name="script"><![CDATA[
+import groovy.json.JsonSlurper
+try {
+ def uri = new URI(props.getProperty('baseUrl', ''))
+ def path = props.getProperty('reservaPath', '')
+ def users = Integer.parseInt(props.getProperty('users', '2'))
+ def file = new File(props.getProperty('payloadFile', ''))
+ if (!(uri.scheme in ['http', 'https']) || !uri.host || (uri.path && uri.path != '/') || uri.userInfo || uri.query || uri.fragment) {
+  throw new IllegalArgumentException('URL invalida')
+ }
+ if (!path.startsWith('/') || users < 2 || users > 1000 || !file.isFile()) {
+  throw new IllegalArgumentException('Propriedades invalidas')
+ }
+ def body = file.getText('UTF-8')
+ if (!(new JsonSlurper().parseText(body) instanceof Map)) {
+  throw new IllegalArgumentException('Payload deve ser objeto JSON')
+ }
+ props.setProperty('qa.scheme', uri.scheme)
+ props.setProperty('qa.host', uri.host)
+ props.setProperty('qa.port', String.valueOf(uri.port == -1 ? (uri.scheme == 'https' ? 443 : 80) : uri.port))
+ props.setProperty('qa.body', body)
+ SampleResult.setResponseCode('200')
+ SampleResult.setResponseMessage('Configuracao validada')
+} catch (Exception ignored) {
+ SampleResult.setSuccessful(false)
+ SampleResult.setResponseCode('CONFIG_ERROR')
+ SampleResult.setResponseMessage('Configuracao invalida; conteudo omitido')
+ SampleResult.setStopTest(true)
+}
+    ]]></stringProp>
+   </JSR223Sampler><hashTree/>
+  </hashTree>
+  <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Disputa" enabled="true">
+   <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+   <elementProp name="ThreadGroup.main_controller" elementType="LoopController"><boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">1</stringProp></elementProp>
+   <stringProp name="ThreadGroup.num_threads">${__P(users,2)}</stringProp><stringProp name="ThreadGroup.ramp_time">0</stringProp>
+  </ThreadGroup>
+  <hashTree>
+   <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="ReservaConcurrente" enabled="true">
+    <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"><elementProp name="" elementType="HTTPArgument">
+     <boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">${__P(qa.body)}</stringProp><stringProp name="Argument.metadata">=</stringProp>
+    </elementProp></collectionProp></elementProp>
+    <stringProp name="HTTPSampler.domain">${__P(qa.host)}</stringProp><stringProp name="HTTPSampler.port">${__P(qa.port)}</stringProp>
+    <stringProp name="HTTPSampler.protocol">${__P(qa.scheme)}</stringProp><stringProp name="HTTPSampler.path">${__P(reservaPath)}</stringProp>
+    <stringProp name="HTTPSampler.method">POST</stringProp><boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+    <boolProp name="HTTPSampler.follow_redirects">false</boolProp><boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+    <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+    <stringProp name="HTTPSampler.connect_timeout">5000</stringProp><stringProp name="HTTPSampler.response_timeout">10000</stringProp>
+   </HTTPSamplerProxy>
+   <hashTree>
+    <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Cabecalhos" enabled="true">
+     <collectionProp name="HeaderManager.headers">
+      <elementProp name="" elementType="Header"><stringProp name="Header.name">Content-Type</stringProp><stringProp name="Header.value">application/json</stringProp></elementProp>
+      <elementProp name="" elementType="Header"><stringProp name="Header.name">Authorization</stringProp><stringProp name="Header.value">${qaAuth}</stringProp></elementProp>
+     </collectionProp>
+    </HeaderManager><hashTree/>
+    <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Credencial da sessao" enabled="true">
+     <stringProp name="scriptLanguage">groovy</stringProp><stringProp name="cacheKey">true</stringProp>
+     <stringProp name="script">vars.put('qaAuth', System.getenv('RECURSOS_QA_AUTHORIZATION') ?: '')</stringProp>
+    </JSR223PreProcessor><hashTree/>
+    <SyncTimer guiclass="TestBeanGUI" testclass="SyncTimer" testname="Liberar usuarios juntos" enabled="true">
+     <intProp name="groupSize">0</intProp><longProp name="timeoutInMs">10000</longProp>
+    </SyncTimer><hashTree/>
+    <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Classificar HTTP" enabled="true">
+     <stringProp name="scriptLanguage">groovy</stringProp><stringProp name="cacheKey">true</stringProp>
+     <stringProp name="script">prev.setSuccessful(prev.getResponseCode() in ['201', '409'])</stringProp>
+    </JSR223PostProcessor><hashTree/>
+   </hashTree>
+  </hashTree>
+ </hashTree>
+</hashTree>
+</jmeterTestPlan>
