@@ -7,8 +7,8 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | RF-01 | acesso com perfil indevido | perfis negam operações não autorizadas | a criar | a criar | pendente |
 | RF-02 | recurso inválido ou duplicado | cadastro e consulta preservam invariantes | a criar | a criar | pendente |
 | RF-03 | disponibilidade incorreta | filtros retornam apenas recursos compatíveis | a criar | a criar | pendente |
-| RF-04 | alteração/cancelamento em estado proibido | transições respeitam regras | a criar | a criar | pendente |
-| RF-05 | sobreposição de agenda | sala, material e professor não se sobrepõem | a criar | a criar | crítico/pendente |
+| RF-04 | alteração/cancelamento em estado proibido | duração válida; transições respeitam regras | PeriodoReservaTest (duração); transições a criar | [Primeira etapa](testes/periodos-reserva.md); execução vinculada ao commit pendente | parcial: duração implementada; CRUD/transições pendentes |
+| RF-05 | sobreposição de agenda | períodos consecutivos permitidos; interseção recusada para mesmo recurso/professor | PeriodoReservaTest (comparação temporal); integração a criar | [Casos e limites](testes/periodos-reserva.md); execução vinculada ao commit pendente | crítico/parcial: regra temporal implementada; seleção de recursos e persistência pendentes |
 | RF-06 | dupla reserva concorrente | apenas uma solicitação simultânea é aceita | a criar | a criar | crítico/pendente |
 | RF-07 | aprovação por usuário indevido | somente Responsável aprova restrito | a criar | a criar | crítico/pendente |
 | RF-08 | manutenção ignorada | recurso bloqueado não pode ser reservado | a criar | a criar | pendente |
