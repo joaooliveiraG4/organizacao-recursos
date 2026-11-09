@@ -9,7 +9,7 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | RF-03 | disponibilidade incorreta | filtros retornam apenas recursos compatíveis | a criar | a criar | pendente |
 | RF-04 | alteração/cancelamento em estado proibido | reserva nasce SOLICITADA com período válido | `PeriodoReservaTest`, `ReservaTest` e `ReservaIntegrationTest` | Flyway aplicou a V6 no PostgreSQL de teste. Os 2 testes de integração passaram sem casos pulados: gravação e leitura de reserva `SOLICITADA` e rejeição de período vazio. [CI do commit `523ffdb`](https://github.com/joaooliveiraG4/organizacao-recursos/actions/runs/42672247198) | parcial: modelo inicial; API, edição e cancelamento pendentes |
 | RF-05 | sobreposição de agenda | sala, material e professor não se sobrepõem | a criar | a criar | crítico/pendente |
-| RF-06 | dupla reserva concorrente | apenas uma solicitação simultânea é aceita | a criar | a criar | crítico/pendente |
+| RF-06 | dupla reserva concorrente | dois POSTs para a mesma sala e horário devem retornar um `201` e um `409`, com uma alocação ativa | `ReservaIntegrationTest` disputa duas transações no PostgreSQL e verifica `23P01`, rollback e uma alocação ativa | restrição GiST na V6 e teste de banco na PR #10 | parcial. Teste HTTP aguarda a API de reservas e o mapeamento de `23P01` |
 | RF-07 | aprovação por usuário indevido | somente Responsável aprova restrito | a criar | a criar | crítico/pendente |
 | RF-08 | manutenção ignorada | recurso bloqueado não pode ser reservado | a criar | a criar | pendente |
 | RF-09 | perda de controle de material | retirada/devolução mantém estado coerente | a criar | a criar | pendente |
