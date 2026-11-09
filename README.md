@@ -22,6 +22,28 @@ docker compose up -d
 
 Verifique `http://localhost:8080/api/v1/status` e `http://localhost:8080/actuator/health`.
 
+### Administrador local
+
+Os demais endpoints exigem login. Para criar um Administrador na primeira execução, defina as variáveis no terminal antes de subir a aplicação (use valores próprios e não os versione):
+
+```powershell
+$env:BOOTSTRAP_ADMIN_EMAIL = "admin@exemplo.test"
+$env:BOOTSTRAP_ADMIN_PASSWORD = "<escolha-uma-senha>"
+.\mvnw.cmd spring-boot:run
+curl.exe -u admin@exemplo.test:<senha> http://localhost:8080/api/v1/me
+```
+
+Perfis, permissões e respostas de erro: [contrato de autenticação](docs/contratos/autenticacao.md).
+
+### Banco local com migrations fora de ordem
+
+Se a aplicação não subir com erro do Flyway como `Detected resolved migration not applied to database`, o banco local recebeu uma migration de número maior antes de uma menor (por exemplo, rodou a V3 antes de a V2 entrar na `main`). Em ambiente local, recrie o banco; os dados são apagados:
+
+```powershell
+docker compose down -v
+docker compose up -d
+```
+
 ## Fluxo da equipe
 
 1. Clone o repositório e abra sua raiz no VS Code/Codex.
@@ -50,7 +72,10 @@ Relatórios:
 - [Plano de recuperação](docs/plano-recuperacao-semana-42.md)
 - [Matriz de rastreabilidade](docs/RTM.md)
 - [Plano de testes](docs/testes/plano-de-testes.md)
+- [Contrato da API de salas](docs/contratos/salas.md)
 - [Arquitetura](docs/arquitetura/README.md)
+- [ADR 0002 — autenticação e perfis](docs/adr/0002-autenticacao-e-perfis.md)
+- [ADR 0003 — auditoria transacional e imutável](docs/adr/0003-auditoria-transacional-e-imutavel.md)
 - [Prompts da equipe](docs/prompts-da-equipe.md)
 - [Contrato da API de professores e materiais](docs/contratos/professores-e-materiais.md)
 
