@@ -16,18 +16,18 @@ está concluído com esta preparação.
 
 | Caso | Preparação / ação | Resultado a validar | Situação |
 |---|---|---|---|
-| U01 | Reserva aprovada de material; registrar retirada | Proposta: APROVADA → EM_USO, horário/autoria e evento na mesma transação | aguarda regra do João e API |
-| U02 | Material em uso; registrar devolução | Proposta: EM_USO → CONCLUIDA, horário/autoria e evento na mesma transação | aguarda regra do João e API |
-| U03 | Retirar reserva solicitada, cancelada ou concluída | Recusa sem alterar reserva/material/auditoria | regra exata pendente |
-| U04 | Repetir retirada/devolução | Não duplicar movimentação; decidir erro versus idempotência | decisão pendente |
-| U05 | Perfil sem permissão | 403, nenhuma alteração | matriz de RF-09 pendente |
-| U06 | Falha ao salvar movimento ou auditoria | Rollback integral; nenhuma alteração parcial | depende da PR #6 integrada |
-| U07 | Duas retiradas simultâneas da mesma reserva | Uma única movimentação confirmada | API/banco pendentes |
+| U01 | Responsável ou Administrador registra retirada de reserva APROVADA | Passa para EM_USO e registra auditoria na mesma transação | aguarda implementação |
+| U02 | Responsável ou Administrador registra devolução de reserva EM_USO | Passa para CONCLUIDA e registra auditoria na mesma transação | aguarda implementação |
+| U03 | Registrar retirada ou devolução em estado incompatível | 409 com mensagem neutra, sem mudança de estado nem evento de transição | aguarda implementação |
+| U04 | Repetir retirada ou devolução já registrada | 409, sem duplicar movimentação | aguarda implementação |
+| U05 | Solicitante tenta registrar retirada ou devolução | 403, sem mudança de estado | aguarda implementação |
+| U06 | Falha ao salvar movimento ou auditoria | Rollback integral, conforme ADR 0003 | depende da integração da PR #6 |
+| U07 | Duas retiradas simultâneas da mesma reserva | Uma transição confirmada e uma recusa por conflito, com um único evento de transição | aguarda implementação |
 
-A especificação informa a cadeia SOLICITADA → APROVADA → EM_USO → CONCLUIDA
-e diz que o Responsável acompanha retiradas/devoluções. Ela não define sozinha
-todos os endpoints, autorizações e a política de repetição. Confirmar com João
-antes de transformar as propostas da tabela em código.
+Regras confirmadas por João em 09/11/2026. O RF-09 entra depois do RF-04
+(entidade e estados) e do RF-06 (restrição de exclusão na migração V6 e
+teste de concorrência no PostgreSQL). A base prevista inclui as PRs #2,
+#6 e #3.
 
 Quantidade no catálogo é o total cadastrado; não deve ser reduzida automaticamente
 como se fosse estoque vendido. Definir com a equipe a unidade reservável,
