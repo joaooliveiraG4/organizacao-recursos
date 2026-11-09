@@ -7,7 +7,7 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | RF-01 | acesso com perfil indevido | perfis negam operações não autorizadas | a criar | a criar | pendente |
 | RF-02 | recurso inválido ou duplicado | cadastro e consulta preservam invariantes | a criar | a criar | pendente |
 | RF-03 | disponibilidade incorreta | filtros retornam apenas recursos compatíveis | a criar | a criar | pendente |
-| RF-04 | alteração/cancelamento em estado proibido | transições respeitam regras | a criar | a criar | pendente |
+| RF-04 | alteração/cancelamento em estado proibido | reserva nasce SOLICITADA com período válido | `PeriodoReservaTest`, `ReservaTest` e `ReservaIntegrationTest` | migration V6 e testes nesta branch, execução PostgreSQL a confirmar | parcial: modelo inicial; API, edição e cancelamento pendentes |
 | RF-05 | sobreposição de agenda | sala, material e professor não se sobrepõem | a criar | a criar | crítico/pendente |
 | RF-06 | dupla reserva concorrente | apenas uma solicitação simultânea é aceita | a criar | a criar | crítico/pendente |
 | RF-07 | aprovação por usuário indevido | somente Responsável aprova restrito | a criar | a criar | crítico/pendente |
