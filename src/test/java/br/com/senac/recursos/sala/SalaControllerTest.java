@@ -3,6 +3,7 @@ package br.com.senac.recursos.sala;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -13,6 +14,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -26,7 +29,7 @@ import br.com.senac.recursos.config.SecurityConfiguration;
 
 @WebMvcTest(SalaController.class)
 @Import({SecurityConfiguration.class, SalaExceptionHandler.class})
-@WithMockUser
+@WithMockUser(roles = "ADMINISTRADOR")
 class SalaControllerTest {
 
     @Autowired
@@ -34,6 +37,28 @@ class SalaControllerTest {
 
     @MockitoBean
     private SalaService salaService;
+
+    @ParameterizedTest(name = "{0} não cadastra sala")
+    @ValueSource(strings = {"SOLICITANTE", "RESPONSAVEL"})
+    void perfilSemPermissaoRecebe403AoCadastrar(String perfil) throws Exception {
+        mockMvc.perform(post("/api/v1/salas")
+                        .with(user("pessoa@exemplo.test").roles(perfil))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"codigo\":\"B-101\",\"tipo\":\"Aula\","
+                                + "\"capacidade\":30,\"localizacao\":\"Bloco B\"}"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(salaService);
+    }
+
+    @ParameterizedTest(name = "{0} consulta salas")
+    @ValueSource(strings = {"SOLICITANTE", "RESPONSAVEL"})
+    void qualquerPerfilAutenticadoConsulta(String perfil) throws Exception {
+        when(salaService.listar()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/salas").with(user("pessoa@exemplo.test").roles(perfil)))
+                .andExpect(status().isOk());
+    }
 
     @Test
     void deveRetornarSalaCriadaComLocation() throws Exception {

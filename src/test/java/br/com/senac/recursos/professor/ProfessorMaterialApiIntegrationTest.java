@@ -31,7 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers(disabledWithoutDocker = true)
-@WithMockUser
+@WithMockUser(roles = "ADMINISTRADOR")
 class ProfessorMaterialApiIntegrationTest {
 
     @Container
