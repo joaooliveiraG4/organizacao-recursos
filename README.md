@@ -61,6 +61,7 @@ Relatórios:
 - [Plano de testes](docs/testes/plano-de-testes.md)
 - [Contrato da API de salas](docs/contratos/salas.md)
 - [Arquitetura](docs/arquitetura/README.md)
+- [ADR 0003 — auditoria transacional e imutável](docs/adr/0003-auditoria-transacional-e-imutavel.md)
 - [Prompts da equipe](docs/prompts-da-equipe.md)
 - [Contrato da API de professores e materiais](docs/contratos/professores-e-materiais.md)
 
