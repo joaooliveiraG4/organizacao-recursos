@@ -1,6 +1,8 @@
 # API de reservas
 
-O perfil Solicitante usa HTTP Basic e opera apenas as próprias reservas.
+A API usa HTTP Basic. O Solicitante cria, edita e cancela as próprias reservas.
+O Administrador pode editar e cancelar qualquer reserva, respeitando os mesmos estados.
+A auditoria registra o usuário autenticado como autor de cada operação.
 
 - `POST /api/v1/reservas` cria uma reserva `SOLICITADA` e retorna `201`.
 - `PUT /api/v1/reservas/{id}` substitui o período e os recursos e retorna `200`.
@@ -17,4 +19,5 @@ catálogo ainda não expõe sua configuração. Cancelar muda o estado para
 `CANCELADA` e libera as alocações na mesma transação da auditoria.
 
 A API retorna `409` por sobreposição ou por estado que impede a operação.
-Reservas inexistentes ou de outro solicitante retornam `404`.
+Reserva inexistente retorna `404`. Solicitante que tenta alterar ou cancelar
+uma reserva de outra pessoa recebe `403`.

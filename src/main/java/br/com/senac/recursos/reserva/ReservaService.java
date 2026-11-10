@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import br.com.senac.recursos.auditoria.AuditoriaService;
+import br.com.senac.recursos.seguranca.Perfil;
+import br.com.senac.recursos.seguranca.UsuarioAutenticado;
 
 @Service
 public class ReservaService {
@@ -55,9 +57,9 @@ public class ReservaService {
     }
 
     @Transactional
-    public Reserva editar(UUID solicitante, UUID id, Instant inicio, Instant fim,
+    public Reserva editar(UsuarioAutenticado usuario, UUID id, Instant inicio, Instant fim,
             UUID sala, UUID professor, Set<UUID> materiais) {
-        var reserva = buscarEditavel(solicitante, id);
+        var reserva = buscarEditavel(usuario, id);
         var periodo = validarPeriodo(inicio, fim);
         var novos = recursos(sala, professor, materiais);
         var envolvidos = new HashSet<>(novos);
@@ -74,23 +76,26 @@ public class ReservaService {
         for (var recurso : novos) {
             alocar(reserva, recurso);
         }
-        registrarMudanca(reserva, anterior, "RESERVA_EDITADA");
+        registrarMudanca(reserva, anterior, "RESERVA_EDITADA", usuario.id());
         return reserva;
     }
 
     @Transactional
-    public void cancelar(UUID solicitante, UUID id) {
-        var reserva = buscarEditavel(solicitante, id);
+    public void cancelar(UsuarioAutenticado usuario, UUID id) {
+        var reserva = buscarEditavel(usuario, id);
         var anterior = reserva.getEstado();
         reserva.cancelar();
         jdbc.update("UPDATE reserva_recurso SET ativo = false WHERE reserva_id = ? AND ativo", id);
-        registrarMudanca(reserva, anterior, "RESERVA_CANCELADA");
+        registrarMudanca(reserva, anterior, "RESERVA_CANCELADA", usuario.id());
     }
 
-    private Reserva buscarEditavel(UUID solicitante, UUID id) {
+    private Reserva buscarEditavel(UsuarioAutenticado usuario, UUID id) {
         var reserva = entidades.find(Reserva.class, id, LockModeType.PESSIMISTIC_WRITE);
-        if (reserva == null || !reserva.getSolicitanteId().equals(solicitante)) {
+        if (reserva == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva não encontrada.");
+        }
+        if (usuario.perfil() != Perfil.ADMINISTRADOR && !reserva.getSolicitanteId().equals(usuario.id())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não pode alterar esta reserva.");
         }
         if (reserva.getEstado() != EstadoReserva.SOLICITADA && reserva.getEstado() != EstadoReserva.APROVADA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A reserva não pode ser alterada nesse estado.");
@@ -98,8 +103,8 @@ public class ReservaService {
         return reserva;
     }
 
-    private void registrarMudanca(Reserva reserva, EstadoReserva anterior, String acao) {
-        auditoria.registrar("RESERVA", reserva.getId(), acao, reserva.getSolicitanteId(),
+    private void registrarMudanca(Reserva reserva, EstadoReserva anterior, String acao, UUID autor) {
+        auditoria.registrar("RESERVA", reserva.getId(), acao, autor,
                 Map.of("de", anterior.name(), "para", reserva.getEstado().name()));
     }
 

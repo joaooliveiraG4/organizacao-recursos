@@ -45,7 +45,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@Testcontainers(disabledWithoutDocker = true)
+@Testcontainers
 class ReservaIntegrationTest {
 
     private static final Instant INICIO = Instant.parse("2026-11-12T14:00:00Z");
@@ -231,14 +231,43 @@ class ReservaIntegrationTest {
                 .isEqualTo("APROVADA");
         assertThat(acoes(id)).containsExactly("RESERVA_CRIADA");
 
-        var outro = cadastrarSolicitante(senhas.encode(senha));
-        mvc.perform(delete("/api/v1/reservas/{id}", id).with(httpBasic(outro + "@example.test", senha)))
-                .andExpect(status().isNotFound());
         mvc.perform(put("/api/v1/reservas/{id}", id).with(httpBasic(solicitante + "@example.test", senha))
                         .contentType(MediaType.APPLICATION_JSON).content(pedidoPara(cadastrarSala(false))))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("APROVADA"));
         mvc.perform(delete("/api/v1/reservas/{id}", id).with(httpBasic(solicitante + "@example.test", senha)))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void terceiroRecebe403EAdminEditaECancelaComAutoriaPropria() throws Exception {
+        var senha = UUID.randomUUID().toString();
+        var hash = senhas.encode(senha);
+        var dono = cadastrarSolicitante(hash);
+        var terceiro = cadastrarSolicitante(hash);
+        var admin = cadastrarUsuario(hash, "ADMINISTRADOR");
+        var pedido = pedidoPara(cadastrarSala(false));
+        var id = criarPelaApi(dono, senha, pedido);
+
+        mvc.perform(put("/api/v1/reservas/{id}", id).with(httpBasic(terceiro + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON).content(pedido))
+                .andExpect(status().isForbidden());
+        mvc.perform(delete("/api/v1/reservas/{id}", id).with(httpBasic(terceiro + "@example.test", senha)))
+                .andExpect(status().isForbidden());
+        assertThat(acoes(id)).containsExactly("RESERVA_CRIADA");
+
+        mvc.perform(put("/api/v1/reservas/{id}", id).with(httpBasic(admin + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON).content(pedido))
+                .andExpect(status().isOk());
+        mvc.perform(delete("/api/v1/reservas/{id}", id).with(httpBasic(admin + "@example.test", senha)))
+                .andExpect(status().isNoContent());
+
+        assertThat(acoes(id)).containsExactly("RESERVA_CRIADA", "RESERVA_EDITADA", "RESERVA_CANCELADA");
+        assertThat(jdbc.queryForList("""
+                SELECT actor_id FROM audit_event WHERE aggregate_id = ? ORDER BY sequence_number
+                """, UUID.class, id)).containsExactly(dono, admin, admin);
+        assertThat(jdbc.queryForObject("SELECT solicitante_id FROM reserva WHERE id = ?", UUID.class, id))
+                .isEqualTo(dono);
     }
 
     private UUID criarPelaApi(UUID solicitante, String senha, String pedido) throws Exception {
@@ -328,11 +357,15 @@ class ReservaIntegrationTest {
     }
 
     private UUID cadastrarSolicitante(String senhaHash) {
+        return cadastrarUsuario(senhaHash, "SOLICITANTE");
+    }
+
+    private UUID cadastrarUsuario(String senhaHash, String perfil) {
         var id = UUID.randomUUID();
         jdbc.update("""
                 INSERT INTO app_user (id, name, email, role, password_hash)
                 VALUES (?, ?, ?, ?, ?)
-                """, id, "Solicitante de teste", id + "@example.test", "SOLICITANTE", senhaHash);
+                """, id, "Solicitante de teste", id + "@example.test", perfil, senhaHash);
         return id;
     }
 }

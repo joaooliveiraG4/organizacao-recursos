@@ -42,19 +42,19 @@ public class ReservaController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SOLICITANTE')")
+    @PreAuthorize("hasAnyRole('SOLICITANTE', 'ADMINISTRADOR')")
     public ReservaCriada editar(@AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID id, @Valid @RequestBody CriarReserva pedido) {
-        var reserva = reservas.editar(usuario.id(), id, pedido.inicio(), pedido.fim(),
+        var reserva = reservas.editar(usuario, id, pedido.inicio(), pedido.fim(),
                 pedido.salaId(), pedido.professorId(), pedido.materialIds());
         return new ReservaCriada(reserva.getId(), reserva.getEstado());
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SOLICITANTE')")
+    @PreAuthorize("hasAnyRole('SOLICITANTE', 'ADMINISTRADOR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelar(@AuthenticationPrincipal UsuarioAutenticado usuario, @PathVariable UUID id) {
-        reservas.cancelar(usuario.id(), id);
+        reservas.cancelar(usuario, id);
     }
 
     public record CriarReserva(@NotNull UUID salaId, UUID professorId,
