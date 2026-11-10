@@ -8,17 +8,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.UUID;
 
 import br.com.senac.recursos.material.MaterialRepository;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -190,5 +191,36 @@ class ProfessorMaterialApiIntegrationTest {
                 "audiovisual",
                 1))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void deveBuscarProfessoresPorCompetenciaParcialSemDiferenciarCaixa() throws Exception {
+        professorRepository.saveAll(List.of(
+                new Professor("PROF-1", "Maria Silva", "Matemática Aplicada"),
+                new Professor("PROF-2", "João Lima", "História")));
+
+        mockMvc.perform(get("/api/v1/professores").param("competencia", "MATEM"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].codigo").value("PROF-1"));
+    }
+
+    @Test
+    void deveBuscarMateriaisPorTipoParcialSemDiferenciarCaixa() throws Exception {
+        mockMvc.perform(post("/api/v1/materiais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"codigo\":\"MAT-1\",\"nome\":\"Projetor\","
+                                + "\"tipo\":\"Audiovisual\",\"quantidade\":2}"))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/v1/materiais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"codigo\":\"MAT-2\",\"nome\":\"Mesa\","
+                                + "\"tipo\":\"Mobiliário\",\"quantidade\":5}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/materiais").param("tipo", "AUDIO"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].codigo").value("MAT-1"));
     }
 }

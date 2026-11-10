@@ -3,6 +3,7 @@ package br.com.senac.recursos.sala;
 import java.util.List;
 import java.util.UUID;
 
+import br.com.senac.recursos.catalogo.FiltroCatalogo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,8 +32,12 @@ class SalaService {
     }
 
     @Transactional(readOnly = true)
-    List<SalaResponse> listar() {
-        return salaRepository.findAllByOrderByCodigoAsc().stream()
+    List<SalaResponse> buscar(String tipo, Integer capacidadeMinima, String localizacao) {
+        return salaRepository.buscar(
+                        FiltroCatalogo.normalizarTexto(tipo),
+                        capacidadeMinima,
+                        FiltroCatalogo.normalizarTexto(localizacao))
+                .stream()
                 .map(SalaResponse::from)
                 .toList();
     }

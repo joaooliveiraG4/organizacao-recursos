@@ -3,6 +3,7 @@ package br.com.senac.recursos.material;
 import java.util.List;
 import java.util.UUID;
 
+import br.com.senac.recursos.catalogo.FiltroCatalogo;
 import br.com.senac.recursos.catalogo.RecursoJaCadastradoException;
 import br.com.senac.recursos.catalogo.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
@@ -33,8 +34,8 @@ class MaterialService {
     }
 
     @Transactional(readOnly = true)
-    List<MaterialResponse> listar() {
-        return materialRepository.findAllByOrderByCodigoAsc().stream()
+    List<MaterialResponse> buscar(String tipo) {
+        return materialRepository.buscarPorTipo(FiltroCatalogo.normalizarTexto(tipo)).stream()
                 .map(MaterialResponse::from)
                 .toList();
     }
