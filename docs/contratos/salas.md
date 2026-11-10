@@ -24,7 +24,12 @@ Retorna `201 Created`, o recurso cadastrado e o cabeçalho `Location` para consu
 
 ## Consultar salas
 
-- `GET /api/v1/salas`: lista salas em ordem de código;
+- `GET /api/v1/salas`: lista salas em ordem de código. Aceita filtros opcionais, que podem ser combinados:
+  - `tipo`: trecho do tipo, sem diferenciar maiúsculas/minúsculas;
+  - `capacidadeMinima`: número mínimo de lugares (inteiro a partir de 1); retorna salas com capacidade igual ou maior. Valor 0 ou negativo é recusado com 400 e `erros[].campo = "capacidadeMinima"`;
+  - `localizacao`: trecho da localização, sem diferenciar maiúsculas/minúsculas.
 - `GET /api/v1/salas/{id}`: consulta uma sala pelo identificador UUID; retorna `404 Not Found` se não existir.
 
-Cada resposta contém `id`, `codigo`, `tipo`, `capacidade` e `localizacao`. Os filtros por tipo, capacidade e localização pertencem ao requisito RF-03 e não fazem parte desta entrega.
+Exemplo: `GET /api/v1/salas?tipo=laboratorio&capacidadeMinima=30&localizacao=bloco` retorna apenas salas compatíveis com os três critérios. Filtros textuais em branco são ignorados. Cada resposta contém `id`, `codigo`, `tipo`, `capacidade` e `localizacao`.
+
+O filtro por disponibilidade e período ainda não está implementado: requer integração com o fluxo de reservas. Ele continua pendente no RF-03.
