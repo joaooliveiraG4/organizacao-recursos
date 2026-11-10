@@ -2,6 +2,8 @@ package br.com.senac.recursos.reserva;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -16,11 +18,15 @@ import jakarta.persistence.EntityManager;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -29,6 +35,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 @Transactional
 @Testcontainers(disabledWithoutDocker = true)
 class ReservaIntegrationTest {
@@ -48,6 +55,12 @@ class ReservaIntegrationTest {
 
     @Autowired
     private TransactionTemplate transacao;
+
+    @Autowired
+    private MockMvc mvc;
+
+    @Autowired
+    private PasswordEncoder senhas;
 
     @DynamicPropertySource
     static void configurarBanco(DynamicPropertyRegistry registry) {
@@ -115,6 +128,53 @@ class ReservaIntegrationTest {
                 """, Long.class, solicitante)).isEqualTo(1L);
     }
 
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void apiAceitaUmaDasDuasReservasSimultaneasParaAMesmaSala() throws Exception {
+        var senha = UUID.randomUUID().toString();
+        var primeiro = cadastrarSolicitante(senhas.encode(senha));
+        var segundo = cadastrarSolicitante(senhas.encode(senha));
+        var sala = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO sala (id, codigo, tipo, capacidade, localizacao)
+                VALUES (?, ?, 'Aula', 20, 'Teste')
+                """, sala, sala.toString().substring(0, 20));
+        var pedido = """
+                {"salaId":"%s","inicio":"%s","fim":"%s"}
+                """.formatted(sala, INICIO, FIM);
+        var prontas = new CountDownLatch(2);
+        var iniciar = new CountDownLatch(1);
+
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var primeira = executor.submit(() -> postarReserva(primeiro, senha, pedido, prontas, iniciar));
+            var segunda = executor.submit(() -> postarReserva(segundo, senha, pedido, prontas, iniciar));
+            boolean ambasProntas = prontas.await(10, TimeUnit.SECONDS);
+            iniciar.countDown();
+            assertThat(ambasProntas).isTrue();
+            assertThat(List.of(primeira.get(15, TimeUnit.SECONDS), segunda.get(15, TimeUnit.SECONDS)))
+                    .containsExactlyInAnyOrder(201, 409);
+        }
+
+        assertThat(jdbc.queryForObject("""
+                SELECT count(*) FROM reserva_recurso
+                WHERE tipo_recurso = 'SALA' AND recurso_id = ? AND ativo
+                """, Long.class, sala)).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("""
+                SELECT count(*) FROM reserva WHERE solicitante_id IN (?, ?)
+                """, Long.class, primeiro, segundo)).isEqualTo(1L);
+    }
+
+    private int postarReserva(UUID solicitante, String senha, String pedido, CountDownLatch prontas,
+            CountDownLatch iniciar) throws Exception {
+        prontas.countDown();
+        aguardarInicio(iniciar);
+        return mvc.perform(post("/api/v1/reservas")
+                        .with(httpBasic(solicitante + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pedido))
+                .andReturn().getResponse().getStatus();
+    }
+
     private String tentarReservarSala(UUID solicitante, UUID sala, Runnable antesDaAlocacao,
             Runnable depoisDaAlocacao) {
         try {
@@ -153,11 +213,15 @@ class ReservaIntegrationTest {
     }
 
     private UUID cadastrarSolicitante() {
+        return cadastrarSolicitante("!sem-senha");
+    }
+
+    private UUID cadastrarSolicitante(String senhaHash) {
         var id = UUID.randomUUID();
         jdbc.update("""
-                INSERT INTO app_user (id, name, email, role)
-                VALUES (?, ?, ?, ?)
-                """, id, "Solicitante de teste", id + "@example.test", "SOLICITANTE");
+                INSERT INTO app_user (id, name, email, role, password_hash)
+                VALUES (?, ?, ?, ?, ?)
+                """, id, "Solicitante de teste", id + "@example.test", "SOLICITANTE", senhaHash);
         return id;
     }
 }
