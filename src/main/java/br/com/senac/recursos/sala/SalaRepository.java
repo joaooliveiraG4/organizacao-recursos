@@ -13,9 +13,12 @@ public interface SalaRepository extends JpaRepository<Sala, UUID> {
 
     @Query("""
             select sala from Sala sala
-            where (:tipo is null or lower(sala.tipo) like lower(concat('%', :tipo, '%')))
-              and (:capacidadeMinima is null or sala.capacidade >= :capacidadeMinima)
-              and (:localizacao is null or lower(sala.localizacao) like lower(concat('%', :localizacao, '%')))
+            where (coalesce(:tipo, '') = ''
+                or lower(sala.tipo) like lower(concat('%', :tipo, '%')))
+              and (coalesce(:capacidadeMinima, 0) = 0
+                or sala.capacidade >= :capacidadeMinima)
+              and (coalesce(:localizacao, '') = ''
+                or lower(sala.localizacao) like lower(concat('%', :localizacao, '%')))
             order by sala.codigo
             """)
     List<Sala> buscar(

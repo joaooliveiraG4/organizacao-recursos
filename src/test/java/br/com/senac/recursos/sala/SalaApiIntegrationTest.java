@@ -111,7 +111,7 @@ class SalaApiIntegrationTest {
                 new Sala("B-104", "Auditório", 100, "Bloco Norte")));
 
         mockMvc.perform(get("/api/v1/salas")
-                        .param("tipo", "laboratorio")
+                        .param("tipo", "LABORATÓRIO")
                         .param("capacidadeMinima", "30")
                         .param("localizacao", "NORTE"))
                 .andExpect(status().isOk())

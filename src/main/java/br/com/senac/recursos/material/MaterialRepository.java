@@ -13,7 +13,8 @@ public interface MaterialRepository extends JpaRepository<Material, UUID> {
 
     @Query("""
             select material from Material material
-            where (:tipo is null or lower(material.tipo) like lower(concat('%', :tipo, '%')))
+            where (coalesce(:tipo, '') = ''
+                or lower(material.tipo) like lower(concat('%', :tipo, '%')))
             order by material.codigo
             """)
     List<Material> buscarPorTipo(@Param("tipo") String tipo);

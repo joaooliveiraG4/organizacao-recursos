@@ -13,7 +13,7 @@ public interface ProfessorRepository extends JpaRepository<Professor, UUID> {
 
     @Query("""
             select professor from Professor professor
-            where (:competencia is null
+            where (coalesce(:competencia, '') = ''
                 or lower(professor.competencia) like lower(concat('%', :competencia, '%')))
             order by professor.codigo
             """)
