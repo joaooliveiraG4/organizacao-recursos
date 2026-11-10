@@ -35,14 +35,6 @@ curl.exe -u admin@exemplo.test:<senha> http://localhost:8080/api/v1/me
 
 Perfis, permissões e respostas de erro: [contrato de autenticação](docs/contratos/autenticacao.md).
 
-### Testcontainers com Docker Desktop recente
-
-Se os testes de integração aparecerem como `Skipped` e o log mostrar `Could not find a valid Docker environment` com `Status 400`, a API do Docker é mais nova que a esperada pelo Testcontainers 1.21.3. Informe a versão na execução:
-
-```powershell
-$env:DOCKER_API_VERSION = "1.44"; .\mvnw.cmd clean verify "-Dapi.version=1.44"
-```
-
 ### Banco local com migrations fora de ordem
 
 Se a aplicação não subir com erro do Flyway como `Detected resolved migration not applied to database`, o banco local recebeu uma migration de número maior antes de uma menor (por exemplo, rodou a V3 antes de a V2 entrar na `main`). Em ambiente local, recrie o banco; os dados são apagados:
@@ -73,7 +65,7 @@ Relatórios:
 
 - testes: `target/surefire-reports` e `target/failsafe-reports`;
 - cobertura: `target/site/jacoco/index.html`.
-- análise estática: [painel do projeto no SonarCloud](https://sonarcloud.io/project/overview?id=joaooliveiraG4_organizacao-recursos), executada automaticamente em pushes e pull requests.
+- análise estática: [painel do projeto no SonarCloud](https://sonarcloud.io/project/overview?id=joaooliveiraG4_organizacao-recursos), executada pelo GitHub Actions após `clean verify`, com a cobertura do JaCoCo ([ADR 0004](docs/adr/0004-sonarcloud-pelo-ci.md)).
 
 ## Documentação
 
