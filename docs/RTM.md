@@ -25,19 +25,19 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 
 ## Rastreabilidade arquitetural
 
-Liga cada requisito ao cenário de qualidade da [utility tree](arquitetura/utility-tree.md) e ao componente do [modelo C4](arquitetura/c4.md). Esta seção não muda o status da tabela acima: um requisito só é aprovado com evidência de execução ligada ao commit. A coluna "Natureza" separa o que já foi executado do que é apenas planejado ou proposto.
+Liga cada requisito ao cenário de qualidade da [utility tree](arquitetura/utility-tree.md) e ao componente do [modelo C4](arquitetura/c4.md). Esta seção não muda o status da tabela acima: um requisito só é aprovado com evidência de execução ligada ao commit. A coluna "Natureza" separa o que já foi executado do que é apenas planejado ou proposto. O link da execução, o commit e o resultado de cada item executado estão na coluna "Evidência" da tabela acima; aqui só se indica de onde vêm.
 
 | Requisito | Cenário na utility tree | Componente C4 | Natureza |
 |---|---|---|---|
 | RF-01 | Segurança / Autorização; Segurança / Confidencialidade | Segurança | evidência executada no CI da PR #3; na `main` |
 | RF-02 | Usabilidade / Erros | Catálogo | evidência executada no CI das PRs #2 e #5 |
 | RF-04 | — (transições serão cenário de integridade) | Reserva | planejado |
-| RF-05 | Integridade / Sobreposição | Reserva | parcial: `PeriodoReservaTest` no CI da PR #4; restrição no banco planejada |
+| RF-05 | Integridade / Sobreposição | Reserva | parcial: `PeriodoReservaTest` executado no [CI 40576336630](https://github.com/joaovictordasilvaolveira/organizacao-recursos/actions/runs/40576336630) (commit `4151d8c`, PR #4, fora da `main`); restrição no banco em desenvolvimento no RF-06 |
 | RF-06 | Integridade / Concorrência | Reserva, PostgreSQL | planejado |
 | RF-07 | Segurança / Aprovação | Segurança, Reserva | planejado |
 | RF-10 | Auditabilidade / Atomicidade; Auditabilidade / Imutabilidade | Auditoria | evidência executada no CI da PR #6; na `main` |
 | RF-11 | Disponibilidade / Integração externa | Notificação | **proposta**: limites de 5 s e 2 s a confirmar |
-| RF-13 | Usabilidade / Erros | Segurança, Catálogo | parcial: PRs #2, #3 e #5 |
+| RF-13 | Usabilidade / Erros | Segurança, Catálogo | parcial: mensagens neutras de 400/401/403/409 cobertas pelas evidências do RF-01 e do RF-02 acima |
 | RF-14 | — | Status não cobre; contratos em `docs/contratos` | pendente |
 | RNF-QUAL-01 | Manutenibilidade / Qualidade contínua | Pipeline | parcial: PR #7 aguarda `SONAR_TOKEN` |
 | RNF-QUAL-02 | Testabilidade / Ambiente real | Pipeline | evidência executada no CI da PR #7; na `main` |
