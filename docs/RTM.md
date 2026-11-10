@@ -22,3 +22,23 @@ Atualize esta tabela em toda pull request. Não marque como aprovado sem link pa
 | RF-14 | consumidor não reproduz fluxo | contrato e README permitem execução | a criar | a criar | pendente |
 | RNF-QUAL-01 | defeitos, vulnerabilidades ou duplicações chegarem à `main` | toda PR executa testes, cobertura JaCoCo e Quality Gate do SonarCloud **com a cobertura importada** ([ADR 0004](adr/0004-sonarcloud-pelo-ci.md)) | `.github/workflows/quality.yml` (passo `sonar:sonar` após `clean verify`) | [PR #1: checks e Quality Gate](https://github.com/joaooliveiraG4/organizacao-recursos/pull/1). Lacuna: nas PRs #3 e #6 o Sonar mostrou 0% de cobertura (análise automática). Correção aguardando `SONAR_TOKEN` e desativação da análise automática | parcial: gate sem cobertura até a ativação |
 | RNF-QUAL-02 | testes de integração pulados em silêncio deixam o build verde sem provar persistência | Testcontainers 1.21.4 detecta Docker Desktop recente sem contorno; teste de fumaça estrito (sem `disabledWithoutDocker`) aplica todas as migrations no PostgreSQL real e reprova a suíte se o Docker faltar | `MigracoesPostgresIntegrationTest` | local: `mvnw clean verify` sem `DOCKER_API_VERSION` com 2 testes passando e 0 pulados (com 1.21.3 a detecção falhava com `Status 400`). Simulação de Docker indisponível não executada nesta máquina. [CI da PR #7](https://github.com/joaooliveiraG4/organizacao-recursos/actions/runs/41667160133): `clean verify` passou no commit `4e11a29` com o teste estrito rodando no PostgreSQL do runner | aprovado no commit validado |
+
+## Rastreabilidade arquitetural
+
+Liga cada requisito ao cenário de qualidade da [utility tree](arquitetura/utility-tree.md) e ao componente do [modelo C4](arquitetura/c4.md). Esta seção não muda o status da tabela acima: um requisito só é aprovado com evidência de execução ligada ao commit. A coluna "Natureza" separa o que já foi executado do que é apenas planejado ou proposto.
+
+| Requisito | Cenário na utility tree | Componente C4 | Natureza |
+|---|---|---|---|
+| RF-01 | Segurança / Autorização; Segurança / Confidencialidade | Segurança | evidência executada no CI da PR #3; ainda fora da `main` |
+| RF-02 | Usabilidade / Erros | Catálogo | evidência executada no CI das PRs #2 e #5 |
+| RF-04 | — (transições serão cenário de integridade) | Reserva | planejado |
+| RF-05 | Integridade / Sobreposição | Reserva | parcial: `PeriodoReservaTest` no CI da PR #4; restrição no banco planejada |
+| RF-06 | Integridade / Concorrência | Reserva, PostgreSQL | planejado |
+| RF-07 | Segurança / Aprovação | Segurança, Reserva | planejado |
+| RF-10 | Auditabilidade / Atomicidade; Auditabilidade / Imutabilidade | Auditoria | evidência executada no CI da PR #6; ainda fora da `main` |
+| RF-11 | Disponibilidade / Integração externa | Notificação | **proposta**: limites de 5 s e 2 s a confirmar |
+| RF-13 | Usabilidade / Erros | Segurança, Catálogo | parcial: PRs #2, #3 e #5 |
+| RF-14 | — | Status não cobre; contratos em `docs/contratos` | pendente |
+| RNF-QUAL-01 | Manutenibilidade / Qualidade contínua | Pipeline | parcial: PR #7 aguarda `SONAR_TOKEN` |
+| RNF-QUAL-02 | Testabilidade / Ambiente real | Pipeline | evidência executada no CI da PR #7 |
+| Desempenho (RNF a definir) | Desempenho / Carga nominal | API, PostgreSQL | **proposta**: 50 usuários, p95 de 500 ms e 1% de erro a confirmar; sem execução |
