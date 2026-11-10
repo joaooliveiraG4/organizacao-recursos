@@ -56,7 +56,7 @@ class MaterialControllerTest {
     @ParameterizedTest(name = "{0} consulta materiais")
     @ValueSource(strings = {"SOLICITANTE", "RESPONSAVEL"})
     void qualquerPerfilAutenticadoConsulta(String perfil) throws Exception {
-        when(materialService.listar()).thenReturn(List.of());
+        when(materialService.buscar(null)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/materiais").with(user("pessoa@exemplo.test").roles(perfil)))
                 .andExpect(status().isOk());
@@ -80,12 +80,22 @@ class MaterialControllerTest {
 
     @Test
     void deveListarMateriais() throws Exception {
-        when(materialService.listar()).thenReturn(
+        when(materialService.buscar(null)).thenReturn(
                 List.of(new MaterialResponse(UUID.randomUUID(), "MAT-1", "Projetor", "audiovisual", 2)));
 
         mockMvc.perform(get("/api/v1/materiais"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].codigo").value("MAT-1"));
+    }
+
+    @Test
+    void devePassarTipoNaBuscaDeMateriais() throws Exception {
+        when(materialService.buscar("audio")).thenReturn(
+                List.of(new MaterialResponse(UUID.randomUUID(), "MAT-1", "Projetor", "audiovisual", 2)));
+
+        mockMvc.perform(get("/api/v1/materiais").param("tipo", "audio"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].tipo").value("audiovisual"));
     }
 
     @Test

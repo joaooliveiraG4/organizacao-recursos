@@ -53,13 +53,20 @@ class MaterialServiceTest {
     }
 
     @Test
-    void deveListarMateriais() {
-        when(materialRepository.findAllByOrderByCodigoAsc())
+    void deveBuscarMateriaisPorTipo() {
+        when(materialRepository.buscarPorTipo("audiovisual"))
                 .thenReturn(List.of(new Material("MAT-1", "Projetor", "audiovisual", 2)));
 
-        assertThat(materialService.listar())
+        assertThat(materialService.buscar(" audiovisual "))
                 .extracting(MaterialResponse::codigo)
                 .containsExactly("MAT-1");
+    }
+
+    @Test
+    void deveIgnorarTipoEmBranco() {
+        when(materialRepository.buscarPorTipo(null)).thenReturn(List.of());
+
+        assertThat(materialService.buscar(" ")).isEmpty();
     }
 
     @Test
