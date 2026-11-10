@@ -15,7 +15,8 @@ Reduzir os riscos críticos de autorização, sobreposição, dupla reserva, man
 
 ## Gates
 
-- todos os testes verdes em `clean verify`;
+- todos os testes verdes em `clean verify`, com `Skipped: 0` (teste pulado não conta como aprovado);
+- testes de persistência rodam contra PostgreSQL real; `MigracoesPostgresIntegrationTest` reprova a suíte quando o Docker não está disponível;
 - >= 80% de linhas e >= 70% de branches;
 - zero falha crítica aberta;
 - requisitos críticos com evidência no commit entregue.
