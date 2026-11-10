@@ -17,7 +17,7 @@ Content-Type: application/json
 
 - `tipo`: `RESERVA_APROVADA`, `RESERVA_REJEITADA` ou `RESERVA_CANCELADA`.
 - Somente ids (LGPD): nome, e-mail ou telefone não saem do sistema. O provedor busca o contato por conta própria.
-- Qualquer resposta 2xx significa entregue.
+- Somente resposta 2xx significa entregue. Redirecionamento (3xx), 4xx e 5xx contam como `ERRO_DO_PROVEDOR`; o cliente não segue redirecionamentos.
 
 ## Configuração
 
@@ -30,7 +30,7 @@ Content-Type: application/json
 
 1. **Só depois do commit.** O aviso é publicado dentro da transação da mudança de estado e enviado apenas quando ela é confirmada (ADR 0003). Se a transação for desfeita, nada é enviado.
 2. **Em segundo plano.** O envio roda em outra thread: quem aprova recebe a resposta sem esperar o provedor.
-3. **Falha registra e segue.** Timeout, erro 4xx/5xx ou provedor fora do ar viram um resultado (`TIMEOUT`, `ERRO_DO_PROVEDOR`, `INDISPONIVEL`) registrado no log com tipo e id da reserva. A mudança de estado continua valendo e não há nova tentativa.
+3. **Falha registra e segue.** Timeout, resposta fora de 2xx (3xx, 4xx, 5xx) ou provedor fora do ar viram um resultado (`TIMEOUT`, `ERRO_DO_PROVEDOR`, `INDISPONIVEL`) registrado no log com tipo e id da reserva. A mudança de estado continua valendo e não há nova tentativa.
 
 ## Como usar em um fluxo de reserva
 

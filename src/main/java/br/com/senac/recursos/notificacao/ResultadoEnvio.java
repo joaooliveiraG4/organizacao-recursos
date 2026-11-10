@@ -6,7 +6,7 @@ public enum ResultadoEnvio {
     ENVIADA,
     /** O provedor não respondeu dentro do tempo limite. */
     TIMEOUT,
-    /** O provedor respondeu com erro (4xx ou 5xx). */
+    /** O provedor respondeu fora de 2xx (redirecionamento 3xx, 4xx ou 5xx). */
     ERRO_DO_PROVEDOR,
     /** Não foi possível conectar ao provedor. */
     INDISPONIVEL

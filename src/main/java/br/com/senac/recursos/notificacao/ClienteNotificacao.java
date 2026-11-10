@@ -36,13 +36,18 @@ public class ClienteNotificacao {
 
     public ResultadoEnvio enviar(Notificacao notificacao) {
         try {
-            restClient.post()
+            var resposta = restClient.post()
                     .uri(url)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(notificacao)
                     .retrieve()
                     .toBodilessEntity();
-            return ResultadoEnvio.ENVIADA;
+            // Só 2xx confirma a entrega. O RestClient trata como erro apenas
+            // 4xx/5xx, e o cliente HTTP não segue redirecionamentos: um 3xx
+            // chegaria aqui e seria contado como enviado sem ter sido.
+            return resposta.getStatusCode().is2xxSuccessful()
+                    ? ResultadoEnvio.ENVIADA
+                    : ResultadoEnvio.ERRO_DO_PROVEDOR;
         } catch (RestClientResponseException erroHttp) {
             return ResultadoEnvio.ERRO_DO_PROVEDOR;
         } catch (ResourceAccessException erroDeAcesso) {

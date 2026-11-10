@@ -85,8 +85,9 @@ class ClienteNotificacaoTest {
         assertThat(duracao).isLessThan(Duration.ofSeconds(2));
     }
 
+    /** Só 2xx é entrega: redirecionamento (3xx) também não confirma o aviso. */
     @ParameterizedTest(name = "provedor responde {0}")
-    @ValueSource(ints = {400, 500, 503})
+    @ValueSource(ints = {301, 302, 400, 500, 503})
     void respostaDeErroViraResultadoControlado(int status) {
         PROVEDOR.stubFor(post("/notificacoes").willReturn(aResponse().withStatus(status)));
 
