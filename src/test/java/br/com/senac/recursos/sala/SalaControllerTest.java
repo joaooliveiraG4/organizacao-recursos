@@ -98,6 +98,18 @@ class SalaControllerTest {
                 .andExpect(jsonPath("$[0].capacidade").value(40));
     }
 
+    @ParameterizedTest(name = "capacidadeMinima={0} é recusada")
+    @ValueSource(strings = {"0", "-5"})
+    void deveRecusarCapacidadeMinimaNaoPositivaSemChamarServico(String capacidade) throws Exception {
+        mockMvc.perform(get("/api/v1/salas").param("capacidadeMinima", capacidade))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value(
+                        "Os filtros informados para a pesquisa de salas são inválidos."))
+                .andExpect(jsonPath("$.erros[0].campo").value("capacidadeMinima"));
+
+        verifyNoInteractions(salaService);
+    }
+
     @Test
     void deveConsultarSalaPorId() throws Exception {
         var id = UUID.randomUUID();

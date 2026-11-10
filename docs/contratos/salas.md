@@ -26,7 +26,7 @@ Retorna `201 Created`, o recurso cadastrado e o cabeçalho `Location` para consu
 
 - `GET /api/v1/salas`: lista salas em ordem de código. Aceita filtros opcionais, que podem ser combinados:
   - `tipo`: trecho do tipo, sem diferenciar maiúsculas/minúsculas;
-  - `capacidadeMinima`: número mínimo de lugares; retorna salas com capacidade igual ou maior;
+  - `capacidadeMinima`: número mínimo de lugares (inteiro a partir de 1); retorna salas com capacidade igual ou maior. Valor 0 ou negativo é recusado com 400 e `erros[].campo = "capacidadeMinima"`;
   - `localizacao`: trecho da localização, sem diferenciar maiúsculas/minúsculas.
 - `GET /api/v1/salas/{id}`: consulta uma sala pelo identificador UUID; retorna `404 Not Found` se não existir.
 

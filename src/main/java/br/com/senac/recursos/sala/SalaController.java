@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,7 +40,7 @@ class SalaController {
     @GetMapping
     List<SalaResponse> listar(
             @RequestParam(name = "tipo", required = false) String tipo,
-            @RequestParam(name = "capacidadeMinima", required = false) Integer capacidadeMinima,
+            @RequestParam(name = "capacidadeMinima", required = false) @Min(1) Integer capacidadeMinima,
             @RequestParam(name = "localizacao", required = false) String localizacao) {
         return salaService.buscar(tipo, capacidadeMinima, localizacao);
     }
