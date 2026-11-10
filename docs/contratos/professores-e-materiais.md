@@ -24,8 +24,10 @@ Retorna `201 Created`, o professor e o cabeçalho `Location` para consulta. Cód
 
 ### Consultar professores
 
-- `GET /api/v1/professores`: lista professores em ordem de código;
+- `GET /api/v1/professores`: lista professores em ordem de código; aceita o filtro opcional `competencia`, que procura um trecho sem diferenciar maiúsculas/minúsculas;
 - `GET /api/v1/professores/{id}`: consulta pelo UUID; retorna `404 Not Found` se não existir.
+
+Exemplo: `GET /api/v1/professores?competencia=Matemá` também encontra competências como “Matemática Aplicada”.
 
 ## Materiais
 
@@ -51,10 +53,16 @@ Retorna `201 Created`, o material e o cabeçalho `Location` para consulta. Códi
 
 ### Consultar materiais
 
-- `GET /api/v1/materiais`: lista materiais em ordem de código;
+- `GET /api/v1/materiais`: lista materiais em ordem de código; aceita o filtro opcional `tipo`, que procura um trecho sem diferenciar maiúsculas/minúsculas;
 - `GET /api/v1/materiais/{id}`: consulta pelo UUID; retorna `404 Not Found` se não existir.
 
-Os códigos são removidos de espaços externos e normalizados em maiúsculas antes da gravação; a unicidade também é imposta no PostgreSQL. A quantidade representa o total cadastrado nesta fatia, não a disponibilidade para empréstimo. Retirada/devolução pertence ao RF-09. Pesquisa por competência, tipo ou disponibilidade pertence ao RF-03.
+Exemplo: `GET /api/v1/materiais?tipo=audio` encontra tipos como “audiovisual”. Filtros textuais em branco são ignorados.
+
+Os códigos são removidos de espaços externos e normalizados em maiúsculas antes da gravação; a unicidade também é imposta no PostgreSQL. A quantidade representa o total cadastrado nesta fatia, não a disponibilidade para empréstimo. Retirada/devolução pertence ao RF-09.
+
+## Disponibilidade (RF-03)
+
+A pesquisa por disponibilidade e intervalo de tempo ainda não está implementada: depende de integrar a consulta com o fluxo de reservas, que está sendo desenvolvido separadamente. A RTM mantém esse critério como pendente.
 
 ## Dependência de migration
 

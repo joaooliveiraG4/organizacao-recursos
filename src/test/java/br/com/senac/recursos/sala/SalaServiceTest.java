@@ -49,13 +49,20 @@ class SalaServiceTest {
     }
 
     @Test
-    void deveListarSalasEmOrdemDoRepositorio() {
-        when(salaRepository.findAllByOrderByCodigoAsc())
+    void deveBuscarSalasComOsFiltrosInformados() {
+        when(salaRepository.buscar("lab", 30, "Bloco B"))
                 .thenReturn(List.of(new Sala("B-101", "Aula", 30, "Bloco B")));
 
-        var responses = salaService.listar();
+        var responses = salaService.buscar(" lab ", 30, " Bloco B ");
 
         assertThat(responses).extracting(SalaResponse::codigo).containsExactly("B-101");
+    }
+
+    @Test
+    void deveIgnorarFiltrosTextuaisEmBranco() {
+        when(salaRepository.buscar(null, null, null)).thenReturn(List.of());
+
+        assertThat(salaService.buscar(" ", null, null)).isEmpty();
     }
 
     @Test

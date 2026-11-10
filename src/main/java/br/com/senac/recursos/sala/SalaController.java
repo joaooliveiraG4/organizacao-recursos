@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -36,8 +37,11 @@ class SalaController {
     }
 
     @GetMapping
-    List<SalaResponse> listar() {
-        return salaService.listar();
+    List<SalaResponse> listar(
+            @RequestParam(name = "tipo", required = false) String tipo,
+            @RequestParam(name = "capacidadeMinima", required = false) Integer capacidadeMinima,
+            @RequestParam(name = "localizacao", required = false) String localizacao) {
+        return salaService.buscar(tipo, capacidadeMinima, localizacao);
     }
 
     @GetMapping("/{id}")

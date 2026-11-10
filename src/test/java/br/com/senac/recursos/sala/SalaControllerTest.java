@@ -54,7 +54,7 @@ class SalaControllerTest {
     @ParameterizedTest(name = "{0} consulta salas")
     @ValueSource(strings = {"SOLICITANTE", "RESPONSAVEL"})
     void qualquerPerfilAutenticadoConsulta(String perfil) throws Exception {
-        when(salaService.listar()).thenReturn(List.of());
+        when(salaService.buscar(null, null, null)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/salas").with(user("pessoa@exemplo.test").roles(perfil)))
                 .andExpect(status().isOk());
@@ -77,12 +77,25 @@ class SalaControllerTest {
 
     @Test
     void deveListarSalas() throws Exception {
-        when(salaService.listar()).thenReturn(
+        when(salaService.buscar(null, null, null)).thenReturn(
                 List.of(new SalaResponse(UUID.randomUUID(), "B-101", "Aula", 30, "Bloco B")));
 
         mockMvc.perform(get("/api/v1/salas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].codigo").value("B-101"));
+    }
+
+    @Test
+    void devePassarFiltrosDaConsultaDeSalas() throws Exception {
+        when(salaService.buscar("laboratorio", 30, "bloco b")).thenReturn(
+                List.of(new SalaResponse(UUID.randomUUID(), "B-101", "Laboratório", 40, "Bloco B")));
+
+        mockMvc.perform(get("/api/v1/salas")
+                        .param("tipo", "laboratorio")
+                        .param("capacidadeMinima", "30")
+                        .param("localizacao", "bloco b"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].capacidade").value(40));
     }
 
     @Test

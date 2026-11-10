@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,5 +100,22 @@ class SalaApiIntegrationTest {
                 .andExpect(status().isConflict());
 
         org.assertj.core.api.Assertions.assertThat(salaRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    void deveCombinarTipoCapacidadeMinimaELocalizacaoSemDiferenciarCaixa() throws Exception {
+        salaRepository.saveAll(List.of(
+                new Sala("B-101", "Laboratório de Química", 40, "Bloco Norte"),
+                new Sala("B-102", "Laboratório de Física", 25, "Bloco Norte"),
+                new Sala("B-103", "Laboratório de Química", 40, "Bloco Sul"),
+                new Sala("B-104", "Auditório", 100, "Bloco Norte")));
+
+        mockMvc.perform(get("/api/v1/salas")
+                        .param("tipo", "laboratorio")
+                        .param("capacidadeMinima", "30")
+                        .param("localizacao", "NORTE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].codigo").value("B-101"));
     }
 }
