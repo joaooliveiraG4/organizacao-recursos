@@ -15,7 +15,7 @@ Os limites numéricos de disponibilidade e desempenho (5 s, 2 s, 50 usuários, p
 | Segurança | Aprovação | Só o Responsável aprova recurso restrito; outro perfil recebe 403 | (A, M) | RF-07 | planejado |
 | Auditabilidade | Atomicidade | Se a mudança de estado falhar, nenhum evento de auditoria fica gravado; se a auditoria falhar, a mudança é desfeita | (A, M) | RF-10 | `AuditoriaIntegrationTest` (PR #6) |
 | Auditabilidade | Imutabilidade | `UPDATE`, `DELETE` ou `TRUNCATE` em `audit_event` são recusados pelo banco | (A, B) | RF-10 | `AuditoriaIntegrationTest` (PR #6) |
-| Disponibilidade | Integração externa | Com o serviço de notificação em timeout de 5 s, a aprovação conclui e o usuário recebe resposta em até 2 s | (M, M) | RF-11 | WireMock (planejado) |
+| Disponibilidade | Integração externa | Com o serviço de notificação travado por 5 s, a aprovação conclui e o usuário recebe resposta em até 2 s | (M, M) | RF-11 | `NotificacaoAposCommitIntegrationTest` (WireMock); limites confirmados em 09/11/2026 |
 | Desempenho | Carga nominal | 50 usuários simultâneos consultando disponibilidade: p95 abaixo de 500 ms e taxa de erro abaixo de 1% | (M, M) | RNF de desempenho | JMeter (planejado) |
 | Testabilidade | Tempo controlado | Toda regra que depende de horário usa `Clock` injetado e pode ser testada com horário fixo | (M, B) | todos | `StatusControllerTest`, `AuditoriaServiceTest` |
 | Testabilidade | Ambiente real | A suíte reprova se o PostgreSQL não puder ser iniciado; teste pulado não conta como aprovado | (M, B) | RNF-QUAL-02 | `MigracoesPostgresIntegrationTest` |
@@ -37,4 +37,4 @@ Os limites numéricos de disponibilidade e desempenho (5 s, 2 s, 50 usuários, p
 - **Regra no banco × regra no código (RF-05/06).** Checar conflito só no serviço é mais simples, mas duas transações simultâneas passam pela checagem ao mesmo tempo. A restrição no PostgreSQL é a única que garante uma reserva aceita; o custo é depender de recurso específico do PostgreSQL (o que o ADR 0001 já aceitou ao rejeitar H2).
 - **Atomicidade × disponibilidade (RF-10).** Exigir auditoria na mesma transação faz a operação falhar quando a auditoria falha. Foi escolhido porque mudança sem histórico viola a regra crítica; na prática, a auditoria só falha quando o banco falha, e aí a mudança falharia de qualquer forma.
 - **HTTP Basic × tokens (RF-01).** Basic é simples de testar e demonstrar; exige HTTPS e envia a credencial em toda requisição. A troca por tokens não muda a matriz de perfis.
-- **Notificação depois do commit (RF-11).** O usuário não espera o provedor externo e uma falha nele não desfaz a decisão; o custo é a notificação poder atrasar ou precisar de nova tentativa.
+- **Notificação depois do commit (RF-11).** O usuário não espera o provedor externo e uma falha nele não desfaz a decisão; o custo é a notificação poder atrasar ou se perder: não há nova tentativa (decisão de 09/11/2026; *outbox* fica como melhoria).
