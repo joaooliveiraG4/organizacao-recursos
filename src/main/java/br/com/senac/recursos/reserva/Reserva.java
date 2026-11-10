@@ -42,6 +42,18 @@ public class Reserva {
         this.estado = EstadoReserva.SOLICITADA;
     }
 
+    void editar(PeriodoReserva periodo, boolean restrita) {
+        inicio = periodo.inicio();
+        fim = periodo.fim();
+        if (restrita) {
+            estado = EstadoReserva.SOLICITADA;
+        }
+    }
+
+    void cancelar() {
+        estado = EstadoReserva.CANCELADA;
+    }
+
     public UUID getId() {
         return id;
     }

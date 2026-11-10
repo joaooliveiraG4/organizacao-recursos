@@ -3,11 +3,16 @@ package br.com.senac.recursos.reserva;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -34,47 +39,113 @@ public class ReservaService {
     @Transactional
     public Reserva criar(UUID solicitante, Instant inicio, Instant fim, UUID sala, UUID professor,
             Set<UUID> materiais) {
-        PeriodoReserva periodo;
-        try {
-            periodo = new PeriodoReserva(inicio, fim);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
-
+        var periodo = validarPeriodo(inicio, fim);
+        var recursos = recursos(sala, professor, materiais);
+        bloquearRecursos(recursos);
         var reserva = new Reserva(solicitante, periodo);
         entidades.persist(reserva);
         entidades.flush();
 
-        // Todas as criações bloqueiam os recursos na mesma ordem.
-        alocar(reserva, "SALA", "sala", sala);
-        if (professor != null) {
-            alocar(reserva, "PROFESSOR", "professor", professor);
+        for (var recurso : recursos) {
+            alocar(reserva, recurso);
         }
-        if (materiais != null) {
-            for (UUID material : materiais.stream().sorted().toList()) {
-                alocar(reserva, "MATERIAL", "material", material);
-            }
-        }
-
         auditoria.registrar("RESERVA", reserva.getId(), "RESERVA_CRIADA", solicitante,
                 Map.of("para", reserva.getEstado().name()));
         return reserva;
     }
 
-    private void alocar(Reserva reserva, String tipo, String tabela, UUID recurso) {
-        // O nome da tabela é definido pelas chamadas acima. O id é parametrizado.
-        var encontrados = jdbc.queryForList("SELECT id FROM " + tabela + " WHERE id = ? FOR NO KEY UPDATE",
-                UUID.class, recurso);
-        if (encontrados.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recurso não encontrado.");
-        }
+    @Transactional
+    public Reserva editar(UUID solicitante, UUID id, Instant inicio, Instant fim,
+            UUID sala, UUID professor, Set<UUID> materiais) {
+        var reserva = buscarEditavel(solicitante, id);
+        var periodo = validarPeriodo(inicio, fim);
+        var novos = recursos(sala, professor, materiais);
+        var envolvidos = new HashSet<>(novos);
+        envolvidos.addAll(jdbc.query("""
+                SELECT tipo_recurso, recurso_id FROM reserva_recurso WHERE reserva_id = ?
+                """, (linha, numero) -> new Recurso(Tipo.valueOf(linha.getString("tipo_recurso")),
+                        linha.getObject("recurso_id", UUID.class)), id));
 
+        // Bloqueia os recursos antigos e novos antes de trocar as alocações.
+        var restrita = bloquearRecursos(envolvidos);
+        var anterior = reserva.getEstado();
+        reserva.editar(periodo, restrita);
+        jdbc.update("DELETE FROM reserva_recurso WHERE reserva_id = ?", id);
+        for (var recurso : novos) {
+            alocar(reserva, recurso);
+        }
+        registrarMudanca(reserva, anterior, "RESERVA_EDITADA");
+        return reserva;
+    }
+
+    @Transactional
+    public void cancelar(UUID solicitante, UUID id) {
+        var reserva = buscarEditavel(solicitante, id);
+        var anterior = reserva.getEstado();
+        reserva.cancelar();
+        jdbc.update("UPDATE reserva_recurso SET ativo = false WHERE reserva_id = ? AND ativo", id);
+        registrarMudanca(reserva, anterior, "RESERVA_CANCELADA");
+    }
+
+    private Reserva buscarEditavel(UUID solicitante, UUID id) {
+        var reserva = entidades.find(Reserva.class, id, LockModeType.PESSIMISTIC_WRITE);
+        if (reserva == null || !reserva.getSolicitanteId().equals(solicitante)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva não encontrada.");
+        }
+        if (reserva.getEstado() != EstadoReserva.SOLICITADA && reserva.getEstado() != EstadoReserva.APROVADA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A reserva não pode ser alterada nesse estado.");
+        }
+        return reserva;
+    }
+
+    private void registrarMudanca(Reserva reserva, EstadoReserva anterior, String acao) {
+        auditoria.registrar("RESERVA", reserva.getId(), acao, reserva.getSolicitanteId(),
+                Map.of("de", anterior.name(), "para", reserva.getEstado().name()));
+    }
+
+    private static PeriodoReserva validarPeriodo(Instant inicio, Instant fim) {
+        try {
+            return new PeriodoReserva(inicio, fim);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    private static List<Recurso> recursos(UUID sala, UUID professor, Set<UUID> materiais) {
+        var recursos = new ArrayList<Recurso>();
+        recursos.add(new Recurso(Tipo.SALA, sala));
+        if (professor != null) {
+            recursos.add(new Recurso(Tipo.PROFESSOR, professor));
+        }
+        if (materiais != null) {
+            materiais.stream().sorted().map(id -> new Recurso(Tipo.MATERIAL, id)).forEach(recursos::add);
+        }
+        return recursos;
+    }
+
+    private boolean bloquearRecursos(Iterable<Recurso> recursos) {
+        var ordenados = new ArrayList<Recurso>();
+        recursos.forEach(ordenados::add);
+        ordenados.sort(Comparator.comparing(Recurso::tipo).thenComparing(Recurso::id));
+        boolean restrito = false;
+        for (var recurso : ordenados) {
+            var encontrados = jdbc.queryForList("SELECT restrito FROM " + recurso.tipo().tabela
+                    + " WHERE id = ? FOR NO KEY UPDATE", Boolean.class, recurso.id());
+            if (encontrados.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recurso não encontrado.");
+            }
+            restrito |= encontrados.getFirst();
+        }
+        return restrito;
+    }
+
+    private void alocar(Reserva reserva, Recurso recurso) {
         var periodo = reserva.getPeriodo();
         try {
             jdbc.update("""
                     INSERT INTO reserva_recurso (reserva_id, tipo_recurso, recurso_id, periodo)
                     VALUES (?, ?, ?, tstzrange(?, ?, '[)'))
-                    """, reserva.getId(), tipo, recurso, periodo.inicio().atOffset(ZoneOffset.UTC),
+                    """, reserva.getId(), recurso.tipo().name(), recurso.id(), periodo.inicio().atOffset(ZoneOffset.UTC),
                     periodo.fim().atOffset(ZoneOffset.UTC));
         } catch (DataIntegrityViolationException e) {
             if (e.getMostSpecificCause() instanceof SQLException sql && "23P01".equals(sql.getSQLState())) {
@@ -82,5 +153,18 @@ public class ReservaService {
             }
             throw e;
         }
+    }
+
+    private enum Tipo {
+        SALA("sala"), PROFESSOR("professor"), MATERIAL("material");
+
+        private final String tabela;
+
+        Tipo(String tabela) {
+            this.tabela = tabela;
+        }
+    }
+
+    private record Recurso(Tipo tipo, UUID id) {
     }
 }

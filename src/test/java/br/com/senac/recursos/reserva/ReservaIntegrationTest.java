@@ -3,7 +3,11 @@ package br.com.senac.recursos.reserva;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -16,7 +20,11 @@ import java.util.concurrent.TimeUnit;
 
 import jakarta.persistence.EntityManager;
 
+import com.jayway.jsonpath.JsonPath;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -134,14 +142,8 @@ class ReservaIntegrationTest {
         var senha = UUID.randomUUID().toString();
         var primeiro = cadastrarSolicitante(senhas.encode(senha));
         var segundo = cadastrarSolicitante(senhas.encode(senha));
-        var sala = UUID.randomUUID();
-        jdbc.update("""
-                INSERT INTO sala (id, codigo, tipo, capacidade, localizacao)
-                VALUES (?, ?, 'Aula', 20, 'Teste')
-                """, sala, sala.toString().substring(0, 20));
-        var pedido = """
-                {"salaId":"%s","inicio":"%s","fim":"%s"}
-                """.formatted(sala, INICIO, FIM);
+        var sala = cadastrarSala(false);
+        var pedido = pedidoPara(sala);
         var prontas = new CountDownLatch(2);
         var iniciar = new CountDownLatch(1);
 
@@ -162,6 +164,115 @@ class ReservaIntegrationTest {
         assertThat(jdbc.queryForObject("""
                 SELECT count(*) FROM reserva WHERE solicitante_id IN (?, ?)
                 """, Long.class, primeiro, segundo)).isEqualTo(1L);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void edicaoRestritaVoltaParaSolicitadaECancelamentoLiberaHorario() throws Exception {
+        var senha = UUID.randomUUID().toString();
+        var solicitante = cadastrarSolicitante(senhas.encode(senha));
+        var sala = cadastrarSala(true);
+        var pedido = pedidoPara(sala);
+        var id = criarPelaApi(solicitante, senha, pedido);
+        definirEstado(id, EstadoReserva.APROVADA);
+
+        mvc.perform(put("/api/v1/reservas/{id}", id).with(httpBasic(solicitante + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON).content(pedido))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("SOLICITADA"));
+        assertThat(acoes(id)).containsExactly("RESERVA_CRIADA", "RESERVA_EDITADA");
+
+        mvc.perform(delete("/api/v1/reservas/{id}", id).with(httpBasic(solicitante + "@example.test", senha)))
+                .andExpect(status().isNoContent());
+        assertThat(jdbc.queryForObject("SELECT estado FROM reserva WHERE id = ?", String.class, id))
+                .isEqualTo("CANCELADA");
+        assertThat(jdbc.queryForObject("SELECT ativo FROM reserva_recurso WHERE reserva_id = ?",
+                Boolean.class, id)).isFalse();
+        assertThat(acoes(id)).containsExactly("RESERVA_CRIADA", "RESERVA_EDITADA", "RESERVA_CANCELADA");
+        criarPelaApi(solicitante, senha, pedido);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = EstadoReserva.class, names = {"SOLICITADA", "APROVADA"}, mode = EnumSource.Mode.EXCLUDE)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void estadosNaoEditaveisRecusamEdicaoECancelamento(EstadoReserva estado) throws Exception {
+        var senha = UUID.randomUUID().toString();
+        var solicitante = cadastrarSolicitante(senhas.encode(senha));
+        var pedido = pedidoPara(cadastrarSala(false));
+        var id = criarPelaApi(solicitante, senha, pedido);
+        definirEstado(id, estado);
+
+        mvc.perform(put("/api/v1/reservas/{id}", id).with(httpBasic(solicitante + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON).content(pedido))
+                .andExpect(status().isConflict());
+        mvc.perform(delete("/api/v1/reservas/{id}", id).with(httpBasic(solicitante + "@example.test", senha)))
+                .andExpect(status().isConflict());
+        assertThat(jdbc.queryForObject("SELECT estado FROM reserva WHERE id = ?", String.class, id))
+                .isEqualTo(estado.name());
+        assertThat(acoes(id)).containsExactly("RESERVA_CRIADA");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void conflitoDeEdicaoPreservaAlocacaoEEstadoAnteriores() throws Exception {
+        var senha = UUID.randomUUID().toString();
+        var solicitante = cadastrarSolicitante(senhas.encode(senha));
+        var salaOriginal = cadastrarSala(false);
+        var id = criarPelaApi(solicitante, senha, pedidoPara(salaOriginal));
+        definirEstado(id, EstadoReserva.APROVADA);
+        var pedidoOcupado = pedidoPara(cadastrarSala(true));
+        criarPelaApi(solicitante, senha, pedidoOcupado);
+
+        mvc.perform(put("/api/v1/reservas/{id}", id).with(httpBasic(solicitante + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON).content(pedidoOcupado))
+                .andExpect(status().isConflict());
+        assertThat(jdbc.queryForObject("SELECT recurso_id FROM reserva_recurso WHERE reserva_id = ? AND ativo",
+                UUID.class, id)).isEqualTo(salaOriginal);
+        assertThat(jdbc.queryForObject("SELECT estado FROM reserva WHERE id = ?", String.class, id))
+                .isEqualTo("APROVADA");
+        assertThat(acoes(id)).containsExactly("RESERVA_CRIADA");
+
+        var outro = cadastrarSolicitante(senhas.encode(senha));
+        mvc.perform(delete("/api/v1/reservas/{id}", id).with(httpBasic(outro + "@example.test", senha)))
+                .andExpect(status().isNotFound());
+        mvc.perform(put("/api/v1/reservas/{id}", id).with(httpBasic(solicitante + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON).content(pedidoPara(cadastrarSala(false))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("APROVADA"));
+        mvc.perform(delete("/api/v1/reservas/{id}", id).with(httpBasic(solicitante + "@example.test", senha)))
+                .andExpect(status().isNoContent());
+    }
+
+    private UUID criarPelaApi(UUID solicitante, String senha, String pedido) throws Exception {
+        var resposta = mvc.perform(post("/api/v1/reservas")
+                        .with(httpBasic(solicitante + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON).content(pedido))
+                .andExpect(status().isCreated()).andReturn().getResponse();
+        String id = JsonPath.read(resposta.getContentAsString(), "$.id");
+        return UUID.fromString(id);
+    }
+
+    private UUID cadastrarSala(boolean restrita) {
+        var sala = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO sala (id, codigo, tipo, capacidade, localizacao, restrito)
+                VALUES (?, ?, 'Aula', 20, 'Teste', ?)
+                """, sala, sala.toString().substring(0, 20), restrita);
+        return sala;
+    }
+
+    private static String pedidoPara(UUID sala) {
+        return """
+                {"salaId":"%s","inicio":"%s","fim":"%s"}
+                """.formatted(sala, INICIO, FIM);
+    }
+
+    private void definirEstado(UUID id, EstadoReserva estado) {
+        jdbc.update("UPDATE reserva SET estado = ? WHERE id = ?", estado.name(), id);
+    }
+
+    private List<String> acoes(UUID id) {
+        return jdbc.queryForList("""
+                SELECT action FROM audit_event WHERE aggregate_id = ? ORDER BY sequence_number
+                """, String.class, id);
     }
 
     private int postarReserva(UUID solicitante, String senha, String pedido, CountDownLatch prontas,

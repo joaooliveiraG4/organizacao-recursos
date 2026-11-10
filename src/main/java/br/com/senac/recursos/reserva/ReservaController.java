@@ -10,7 +10,10 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -36,6 +39,22 @@ public class ReservaController {
         var reserva = reservas.criar(usuario.id(), pedido.inicio(), pedido.fim(),
                 pedido.salaId(), pedido.professorId(), pedido.materialIds());
         return new ReservaCriada(reserva.getId(), reserva.getEstado());
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('SOLICITANTE')")
+    public ReservaCriada editar(@AuthenticationPrincipal UsuarioAutenticado usuario,
+            @PathVariable UUID id, @Valid @RequestBody CriarReserva pedido) {
+        var reserva = reservas.editar(usuario.id(), id, pedido.inicio(), pedido.fim(),
+                pedido.salaId(), pedido.professorId(), pedido.materialIds());
+        return new ReservaCriada(reserva.getId(), reserva.getEstado());
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SOLICITANTE')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelar(@AuthenticationPrincipal UsuarioAutenticado usuario, @PathVariable UUID id) {
+        reservas.cancelar(usuario.id(), id);
     }
 
     public record CriarReserva(@NotNull UUID salaId, UUID professorId,
