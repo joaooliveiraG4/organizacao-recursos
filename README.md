@@ -79,5 +79,7 @@ Relatórios:
 - [Prompts da equipe](docs/prompts-da-equipe.md)
 - [Contrato da API de professores e materiais](docs/contratos/professores-e-materiais.md)
 - [Contrato da notificação externa (RF-11)](docs/contratos/notificacao.md)
+- [Contrato da API de reservas](docs/contratos/reservas.md)
+- [Contrato do relatório de utilização (RF-12)](docs/contratos/relatorios.md)
 
 Material oficial da disciplina: https://afonsolelis.github.io/aulas_senac/pages/home_qualidade_2026_2.html

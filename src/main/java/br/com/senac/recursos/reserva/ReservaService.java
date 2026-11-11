@@ -31,11 +31,14 @@ public class ReservaService {
     private final EntityManager entidades;
     private final JdbcTemplate jdbc;
     private final AuditoriaService auditoria;
+    private final RegistroConflitos conflitos;
 
-    public ReservaService(EntityManager entidades, JdbcTemplate jdbc, AuditoriaService auditoria) {
+    public ReservaService(EntityManager entidades, JdbcTemplate jdbc, AuditoriaService auditoria,
+            RegistroConflitos conflitos) {
         this.entidades = entidades;
         this.jdbc = jdbc;
         this.auditoria = auditoria;
+        this.conflitos = conflitos;
     }
 
     @Transactional
@@ -154,6 +157,7 @@ public class ReservaService {
                     periodo.fim().atOffset(ZoneOffset.UTC));
         } catch (DataIntegrityViolationException e) {
             if (e.getMostSpecificCause() instanceof SQLException sql && "23P01".equals(sql.getSQLState())) {
+                conflitos.registrar(recurso.tipo().name(), recurso.id(), periodo);
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Recurso indisponível no período.");
             }
             throw e;
