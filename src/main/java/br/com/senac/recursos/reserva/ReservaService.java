@@ -65,6 +65,9 @@ public class ReservaService {
         }
         auditoria.registrar("RESERVA", reserva.getId(), "RESERVA_CRIADA", solicitante,
                 Map.of("para", reserva.getEstado().name()));
+        if (!restrita) {
+            notificar(reserva, TipoNotificacao.RESERVA_APROVADA);
+        }
         return reserva;
     }
 

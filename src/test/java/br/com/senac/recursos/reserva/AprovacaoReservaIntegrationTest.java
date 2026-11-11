@@ -94,6 +94,8 @@ class AprovacaoReservaIntegrationTest {
         assertThat(jdbc.queryForList("""
                 SELECT action FROM audit_event WHERE aggregate_id = ? ORDER BY sequence_number
                 """, String.class, reserva)).containsExactly("RESERVA_CRIADA");
+        assertThat(eventos.stream(Notificacao.class))
+                .containsExactly(new Notificacao(solicitante, TipoNotificacao.RESERVA_APROVADA, reserva));
     }
 
     @ParameterizedTest(name = "perfil {0} recebe 403 ao aprovar")
