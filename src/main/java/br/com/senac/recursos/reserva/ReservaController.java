@@ -57,6 +57,13 @@ public class ReservaController {
         reservas.cancelar(usuario, id);
     }
 
+    @PostMapping("/{id}/aprovar")
+    @PreAuthorize("hasRole('RESPONSAVEL')")
+    public ReservaCriada aprovar(@AuthenticationPrincipal UsuarioAutenticado usuario, @PathVariable UUID id) {
+        var reserva = reservas.aprovar(usuario, id);
+        return new ReservaCriada(reserva.getId(), reserva.getEstado());
+    }
+
     public record CriarReserva(@NotNull UUID salaId, UUID professorId,
             Set<@NotNull UUID> materialIds, @NotNull Instant inicio, @NotNull Instant fim) {
     }

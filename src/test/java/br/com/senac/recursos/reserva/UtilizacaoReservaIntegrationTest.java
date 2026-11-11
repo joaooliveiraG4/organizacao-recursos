@@ -98,7 +98,8 @@ class UtilizacaoReservaIntegrationTest {
     @Test
     void u03RetiradaEmEstadoIncompativelRetorna409SemMudarNemAuditar() throws Exception {
         var responsavel = cadastrarUsuario("RESPONSAVEL");
-        var reserva = criarReserva(cadastrarUsuario("SOLICITANTE"), cadastrarSala(), periodoNovo());
+        // Recurso restrito permanece SOLICITADA até a aprovação prevista no RF-07.
+        var reserva = criarReserva(cadastrarUsuario("SOLICITANTE"), cadastrarSala(true), periodoNovo());
         var eventosAntes = eventos(reserva).size();
 
         mvc.perform(post("/api/v1/reservas/{id}/retirada", reserva).with(login(responsavel)))
@@ -212,11 +213,15 @@ class UtilizacaoReservaIntegrationTest {
     }
 
     private UUID cadastrarSala() {
+        return cadastrarSala(false);
+    }
+
+    private UUID cadastrarSala(boolean restrita) {
         var sala = UUID.randomUUID();
         jdbc.update("""
-                INSERT INTO sala (id, codigo, tipo, capacidade, localizacao)
-                VALUES (?, ?, 'Laboratório', 20, 'Bloco U')
-                """, sala, sala.toString().substring(0, 20));
+                INSERT INTO sala (id, codigo, tipo, capacidade, localizacao, restrito)
+                VALUES (?, ?, 'Laboratório', 20, 'Bloco U', ?)
+                """, sala, sala.toString().substring(0, 20), restrita);
         return sala;
     }
 

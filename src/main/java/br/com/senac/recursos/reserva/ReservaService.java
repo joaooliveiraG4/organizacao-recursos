@@ -46,8 +46,11 @@ public class ReservaService {
             Set<UUID> materiais) {
         var periodo = validarPeriodo(inicio, fim);
         var recursos = recursos(sala, professor, materiais);
-        bloquearRecursos(recursos);
+        var restrita = bloquearRecursos(recursos);
         var reserva = new Reserva(solicitante, periodo);
+        if (!restrita) {
+            reserva.aprovar();
+        }
         entidades.persist(reserva);
         entidades.flush();
 
@@ -90,6 +93,24 @@ public class ReservaService {
         reserva.cancelar();
         jdbc.update("UPDATE reserva_recurso SET ativo = false WHERE reserva_id = ? AND ativo", id);
         registrarMudanca(reserva, anterior, "RESERVA_CANCELADA", usuario.id());
+    }
+
+    @Transactional
+    public Reserva aprovar(UsuarioAutenticado usuario, UUID id) {
+        var reserva = entidades.find(Reserva.class, id, LockModeType.PESSIMISTIC_WRITE);
+        if (reserva == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva não encontrada.");
+        }
+
+        var anterior = reserva.getEstado();
+        try {
+            reserva.aprovar();
+        } catch (TransicaoInvalidaException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A reserva não pode ser aprovada nesse estado.");
+        }
+        registrarMudanca(reserva, anterior, "RESERVA_APROVADA", usuario.id());
+        return reserva;
     }
 
     private Reserva buscarEditavel(UsuarioAutenticado usuario, UUID id) {
