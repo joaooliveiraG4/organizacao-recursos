@@ -36,6 +36,10 @@ jobs:
       - name: Executar verificação completa
         run: mvn -B clean verify
 
+      - name: Validar avaliador de disputa (fixtures sinteticas)
+        shell: pwsh
+        run: ./performance/testar-avaliador.ps1
+
       # Envia a análise com o relatório do JaCoCo. Fica desligada até existir o
       # segredo SONAR_TOKEN e a análise automática ser desativada no SonarCloud.
       # Espera o resultado do Quality Gate: gate reprovado deixa o CI vermelho.
