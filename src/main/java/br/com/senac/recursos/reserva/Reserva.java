@@ -54,6 +54,24 @@ public class Reserva {
         estado = EstadoReserva.CANCELADA;
     }
 
+    /** RF-09: material/sala retirados; só a partir de APROVADA. */
+    void registrarRetirada() {
+        exigir(EstadoReserva.APROVADA);
+        estado = EstadoReserva.EM_USO;
+    }
+
+    /** RF-09: devolução encerra o uso; só a partir de EM_USO. */
+    void registrarDevolucao() {
+        exigir(EstadoReserva.EM_USO);
+        estado = EstadoReserva.CONCLUIDA;
+    }
+
+    private void exigir(EstadoReserva exigido) {
+        if (estado != exigido) {
+            throw new TransicaoInvalidaException(estado, exigido);
+        }
+    }
+
     public UUID getId() {
         return id;
     }

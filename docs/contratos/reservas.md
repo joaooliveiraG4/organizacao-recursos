@@ -21,3 +21,14 @@ catálogo ainda não expõe sua configuração. Cancelar muda o estado para
 A API retorna `409` por sobreposição ou por estado que impede a operação.
 Reserva inexistente retorna `404`. Solicitante que tenta alterar ou cancelar
 uma reserva de outra pessoa recebe `403`.
+
+## Retirada e devolução (RF-09)
+
+Somente Responsável ou Administrador registra; Solicitante recebe `403`.
+
+- `POST /api/v1/reservas/{id}/retirada`: `APROVADA` → `EM_USO`. Retorna `200` com `id` e `estado`.
+- `POST /api/v1/reservas/{id}/devolucao`: `EM_USO` → `CONCLUIDA`. Libera as alocações (o horário volta a ficar livre) e retorna `200`.
+
+Estado diferente do exigido, inclusive repetir a mesma operação, retorna `409` sem alterar a reserva nem gerar evento. Reserva inexistente retorna `404`. A reserva é travada durante a operação: duas retiradas simultâneas resultam em uma aceita e uma `409`. Cada registro gera um evento de auditoria (`RETIRADA_REGISTRADA` ou `DEVOLUCAO_REGISTRADA`) com o usuário autenticado como autor, na mesma transação.
+
+Fora do escopo: regra de horário (retirar antes do início ou devolver após o fim é aceito) e controle de quantidade de material (ver ADR 0005).
