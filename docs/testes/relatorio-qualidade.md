@@ -1,24 +1,24 @@
 # Relatório de qualidade — release candidate
 
-Data: 11/11/2026. Base medida: branch `feat/joao-relatorio-rf12` (contém a `main` com as PRs até a #10, mais as PRs #14 e #15). Comando: `.\mvnw.cmd clean verify` com Docker Desktop (PostgreSQL 17 real via Testcontainers). Os links de CI de cada requisito estão na [RTM](../RTM.md).
+Data: 11/11/2026. Base medida: `main` no commit `9202a6b` (todas as PRs até a #18). Comando: `.mvnw.cmd clean verify` com Docker Desktop (PostgreSQL 17 real via Testcontainers). Os links de CI de cada requisito estão na [RTM](../RTM.md).
 
 ## Resultado geral
 
 | Indicador | Meta da disciplina | Medido | Situação |
 |---|---|---|---|
-| Testes executados | — | **194**, 0 falhas, 0 erros, **0 pulados** | ✅ |
-| Cobertura de linhas (JaCoCo) | ≥ 80% | **98,2%** (596/607) | ✅ |
-| Cobertura de branches (JaCoCo) | ≥ 70% | **89,0%** (73/82) | ✅ |
-| Requisitos críticos rastreados | 100% | RF-05, RF-06 e RF-07 na RTM; RF-07 ver pendências | ⚠️ |
+| Testes executados | — | **222**, 0 falhas, 0 erros, **0 pulados** | ✅ |
+| Cobertura de linhas (JaCoCo) | ≥ 80% | **98,5%** (660/670) | ✅ |
+| Cobertura de branches (JaCoCo) | ≥ 70% | **91,7%** (88/96) | ✅ |
+| Requisitos críticos rastreados | 100% | RF-05, RF-06 e RF-07 na RTM com teste e CI | ✅ |
 | Bugs/vulnerabilidades críticas | zero | SonarCloud: Quality Gate aprovado, 0 issues novas nas PRs | ✅ (ver limitação do Sonar) |
 
 ## Estratégia de testes aplicada
 
 | Tipo | Onde | Quantidade |
 |---|---|---|
-| Unitário | regras de domínio (`PeriodoReserva`, transições de `Reserva`, serviços do catálogo) | maioria das 27 classes de teste |
-| Parametrizado (JUnit 5) | matriz de perfis do RF-01, estados do RF-09, filtros, códigos HTTP do provedor | 12 classes |
-| Integração com PostgreSQL real (Testcontainers) | migrations, auditoria imutável, reservas, utilização, relatório, notificação | 11 classes |
+| Unitário | regras de domínio (`PeriodoReserva`, transições de `Reserva`, serviços do catálogo) | maioria das 29 classes de teste |
+| Parametrizado (JUnit 5) | matriz de perfis do RF-01, estados do RF-09, filtros, códigos HTTP do provedor | 15 classes |
+| Integração com PostgreSQL real (Testcontainers) | migrations, auditoria imutável, reservas, utilização, relatório, notificação | 13 classes |
 | Integração externa simulada (WireMock) | RF-11: sucesso, timeout, 3xx/4xx/5xx, provedor fora do ar | 2 classes |
 | API caixa-preta (MockMvc + HTTP Basic real) | reservas, retirada/devolução, relatório, catálogo | — |
 | Concorrência | RF-06 (duas criações → 201 + 409) e RF-09 U07 (duas retiradas → 200 + 409) | 3 testes |
@@ -38,6 +38,7 @@ Cada teste abaixo foi rodado com o código propositalmente quebrado e reprovou; 
 | RF-11 | remover `@Async` | quem aprova esperou 3,1 s (meta 2 s) |
 | RF-11 | 302 tratado como entrega (achado na revisão do Kauã) | 301/302 reprovaram antes da correção |
 | RF-12 | remover filtro de estado do relatório | reserva cancelada contada (3 em vez de 2) |
+| RF-09 (U06) | auditoria forçada a falhar na retirada/devolução | estado, alocação e histórico permaneceram (rollback provado) |
 
 ## Decisões de arquitetura registradas
 
@@ -45,8 +46,7 @@ ADR 0001 (stack e PostgreSQL), 0002 (autenticação e perfis), 0003 (auditoria t
 
 ## Pendências e limitações conhecidas
 
-- **RF-07 (aprovação de recurso restrito):** responsabilidade do Kauã; enquanto não entrar, reservas permanecem `SOLICITADA` e a aprovação/notificação não acontecem pelo fluxo real.
-- **RF-08 (manutenção):** responsabilidade da Miranda.
+- **Requisitos:** os 14 RFs estão implementados na `main`, com teste e evidência na RTM. RF-03 cobre filtros cadastrais; a disponibilidade por horário é garantida na reserva (RF-05/06), não como filtro de pesquisa.
 - **SonarCloud:** o repositório foi transferido para a conta pessoal em 10/11; a análise com cobertura do JaCoCo depende do `SONAR_TOKEN` no projeto novo. Até lá, o Sonar mostra 0,0% de cobertura em código novo (a cobertura real é a medida acima).
 - **JMeter:** a ferramenta de disputa (PR #9) está pronta; a execução contra a API rodando fica registrada quando a #9 entrar.
 - **Fora do escopo por decisão:** reenvio de notificação (outbox), quantidade de material (ADR 0005), regra de horário para retirada/devolução, horas do relatório sem recorte nas bordas do período.
