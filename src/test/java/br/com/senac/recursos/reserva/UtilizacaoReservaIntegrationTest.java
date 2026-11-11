@@ -31,9 +31,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * RF-09 — retirada e devolução pela API, com PostgreSQL real. Cobre os
- * cenários U01–U05 e U07 do roteiro de QA (docs/testes/qa-utilizacao-e-concorrencia.md).
- * O U06 (rollback se a auditoria falhar) é garantido pelo Propagation.MANDATORY
- * da auditoria (ADR 0003) e coberto em AuditoriaIntegrationTest.
+ * cenários U01–U05 e U07 do roteiro de QA do Kauã (PR #9,
+ * docs/testes/qa-utilizacao-e-concorrencia.md; o arquivo entra na main com a #9).
+ * O U06 (rollback se a auditoria falhar) está em UtilizacaoReservaRollbackIntegrationTest.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
