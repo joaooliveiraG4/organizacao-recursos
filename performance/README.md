@@ -6,15 +6,16 @@ Preparação de Kauã, em 05/11/2026. Há plano JMX parametrizado e avaliador
 dos resultados HTTP com testes próprios. **Ainda não há execução do JMX
 nem evidência de desempenho/concorrência da API de reservas.**
 
-A main consultada foi 8cff3c8. Ela contém o catálogo de professores/materiais,
-mas ainda não contém API de reservas, autenticação, salas e auditoria integradas.
-Não usar o cadastro de materiais como substituto para uma disputa de reservas.
+A base atual já contém as APIs integradas de reservas, autenticação, salas e
+auditoria, além do catálogo de professores e materiais. O JMeter deve exercitar
+a criação de reservas e validar a disputa real; não usar o cadastro de materiais
+como substituto para uma disputa de reservas.
 
 ## Pré-condições
 
-1. Integrar as dependências pelo fluxo do João, preservando a ordem das migrations.
-2. Ter contrato aprovado de criação de reserva (rota, payload, 201 e conflito 409).
-   Esses códigos são a expectativa do cenário; confirmar com o contrato implementado.
+1. Usar a base atualizada e aplicar as migrations na ordem definida pelo projeto.
+2. Seguir o [contrato implementado de reservas](../docs/contratos/reservas.md)
+   para a rota, o payload e os retornos `201` e `409`.
 3. Ter PostgreSQL e dados sintéticos exclusivos para QA, com recurso/horário livre.
 4. Ter Java 21 e Apache JMeter disponíveis. JMeter e Docker não foram encontrados nesta máquina.
 5. Decidir os limites de carga nominal com João. Os números da utility tree são propostas.
