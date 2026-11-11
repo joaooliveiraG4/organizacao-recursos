@@ -1,0 +1,175 @@
+package br.com.senac.recursos.reserva;
+
+import java.sql.SQLException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import br.com.senac.recursos.auditoria.AuditoriaService;
+import br.com.senac.recursos.seguranca.Perfil;
+import br.com.senac.recursos.seguranca.UsuarioAutenticado;
+
+@Service
+public class ReservaService {
+
+    private final EntityManager entidades;
+    private final JdbcTemplate jdbc;
+    private final AuditoriaService auditoria;
+
+    public ReservaService(EntityManager entidades, JdbcTemplate jdbc, AuditoriaService auditoria) {
+        this.entidades = entidades;
+        this.jdbc = jdbc;
+        this.auditoria = auditoria;
+    }
+
+    @Transactional
+    public Reserva criar(UUID solicitante, Instant inicio, Instant fim, UUID sala, UUID professor,
+            Set<UUID> materiais) {
+        var periodo = validarPeriodo(inicio, fim);
+        var recursos = recursos(sala, professor, materiais);
+        bloquearRecursos(recursos);
+        var reserva = new Reserva(solicitante, periodo);
+        entidades.persist(reserva);
+        entidades.flush();
+
+        for (var recurso : recursos) {
+            alocar(reserva, recurso);
+        }
+        auditoria.registrar("RESERVA", reserva.getId(), "RESERVA_CRIADA", solicitante,
+                Map.of("para", reserva.getEstado().name()));
+        return reserva;
+    }
+
+    @Transactional
+    public Reserva editar(UsuarioAutenticado usuario, UUID id, Instant inicio, Instant fim,
+            UUID sala, UUID professor, Set<UUID> materiais) {
+        var reserva = buscarEditavel(usuario, id);
+        var periodo = validarPeriodo(inicio, fim);
+        var novos = recursos(sala, professor, materiais);
+        var envolvidos = new HashSet<>(novos);
+        envolvidos.addAll(jdbc.query("""
+                SELECT tipo_recurso, recurso_id FROM reserva_recurso WHERE reserva_id = ?
+                """, (linha, numero) -> new Recurso(Tipo.valueOf(linha.getString("tipo_recurso")),
+                        linha.getObject("recurso_id", UUID.class)), id));
+
+        // Bloqueia os recursos antigos e novos antes de trocar as alocações.
+        var restrita = bloquearRecursos(envolvidos);
+        var anterior = reserva.getEstado();
+        reserva.editar(periodo, restrita);
+        jdbc.update("DELETE FROM reserva_recurso WHERE reserva_id = ?", id);
+        for (var recurso : novos) {
+            alocar(reserva, recurso);
+        }
+        registrarMudanca(reserva, anterior, "RESERVA_EDITADA", usuario.id());
+        return reserva;
+    }
+
+    @Transactional
+    public void cancelar(UsuarioAutenticado usuario, UUID id) {
+        var reserva = buscarEditavel(usuario, id);
+        var anterior = reserva.getEstado();
+        reserva.cancelar();
+        jdbc.update("UPDATE reserva_recurso SET ativo = false WHERE reserva_id = ? AND ativo", id);
+        registrarMudanca(reserva, anterior, "RESERVA_CANCELADA", usuario.id());
+    }
+
+    private Reserva buscarEditavel(UsuarioAutenticado usuario, UUID id) {
+        var reserva = entidades.find(Reserva.class, id, LockModeType.PESSIMISTIC_WRITE);
+        if (reserva == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva não encontrada.");
+        }
+        if (usuario.perfil() != Perfil.ADMINISTRADOR && !reserva.getSolicitanteId().equals(usuario.id())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não pode alterar esta reserva.");
+        }
+        if (reserva.getEstado() != EstadoReserva.SOLICITADA && reserva.getEstado() != EstadoReserva.APROVADA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A reserva não pode ser alterada nesse estado.");
+        }
+        return reserva;
+    }
+
+    private void registrarMudanca(Reserva reserva, EstadoReserva anterior, String acao, UUID autor) {
+        auditoria.registrar("RESERVA", reserva.getId(), acao, autor,
+                Map.of("de", anterior.name(), "para", reserva.getEstado().name()));
+    }
+
+    private static PeriodoReserva validarPeriodo(Instant inicio, Instant fim) {
+        try {
+            return new PeriodoReserva(inicio, fim);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    private static List<Recurso> recursos(UUID sala, UUID professor, Set<UUID> materiais) {
+        var recursos = new ArrayList<Recurso>();
+        recursos.add(new Recurso(Tipo.SALA, sala));
+        if (professor != null) {
+            recursos.add(new Recurso(Tipo.PROFESSOR, professor));
+        }
+        if (materiais != null) {
+            materiais.stream().sorted().map(id -> new Recurso(Tipo.MATERIAL, id)).forEach(recursos::add);
+        }
+        return recursos;
+    }
+
+    private boolean bloquearRecursos(Iterable<Recurso> recursos) {
+        var ordenados = new ArrayList<Recurso>();
+        recursos.forEach(ordenados::add);
+        ordenados.sort(Comparator.comparing(Recurso::tipo).thenComparing(Recurso::id));
+        boolean restrito = false;
+        for (var recurso : ordenados) {
+            var encontrados = jdbc.queryForList("SELECT restrito FROM " + recurso.tipo().tabela
+                    + " WHERE id = ? FOR NO KEY UPDATE", Boolean.class, recurso.id());
+            if (encontrados.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recurso não encontrado.");
+            }
+            restrito |= encontrados.getFirst();
+        }
+        return restrito;
+    }
+
+    private void alocar(Reserva reserva, Recurso recurso) {
+        var periodo = reserva.getPeriodo();
+        try {
+            jdbc.update("""
+                    INSERT INTO reserva_recurso (reserva_id, tipo_recurso, recurso_id, periodo)
+                    VALUES (?, ?, ?, tstzrange(?, ?, '[)'))
+                    """, reserva.getId(), recurso.tipo().name(), recurso.id(), periodo.inicio().atOffset(ZoneOffset.UTC),
+                    periodo.fim().atOffset(ZoneOffset.UTC));
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMostSpecificCause() instanceof SQLException sql && "23P01".equals(sql.getSQLState())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Recurso indisponível no período.");
+            }
+            throw e;
+        }
+    }
+
+    private enum Tipo {
+        SALA("sala"), PROFESSOR("professor"), MATERIAL("material");
+
+        private final String tabela;
+
+        Tipo(String tabela) {
+            this.tabela = tabela;
+        }
+    }
+
+    private record Recurso(Tipo tipo, UUID id) {
+    }
+}
