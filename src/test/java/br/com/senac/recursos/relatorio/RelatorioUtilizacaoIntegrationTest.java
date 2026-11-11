@@ -83,7 +83,7 @@ class RelatorioUtilizacaoIntegrationTest {
                         .param("fim", "2041-04-01T00:00:00Z")
                         .with(login(responsavel)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reservasPorEstado.SOLICITADA").value(2))
+                .andExpect(jsonPath("$.reservasPorEstado.APROVADA").value(2))
                 .andExpect(jsonPath("$.reservasPorEstado.CANCELADA").value(1))
                 .andExpect(jsonPath("$.recursos[?(@.codigo == 'REL-SALA-1')].reservas").value(2))
                 .andExpect(jsonPath("$.recursos[?(@.codigo == 'REL-SALA-1')].horas").value(5.0))
