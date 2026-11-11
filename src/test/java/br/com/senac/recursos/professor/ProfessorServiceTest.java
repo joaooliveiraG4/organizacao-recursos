@@ -52,13 +52,20 @@ class ProfessorServiceTest {
     }
 
     @Test
-    void deveListarProfessores() {
-        when(professorRepository.findAllByOrderByCodigoAsc())
+    void deveBuscarProfessoresPorCompetencia() {
+        when(professorRepository.buscarPorCompetencia("matematica"))
                 .thenReturn(List.of(new Professor("PROF-1", "Maria Silva", "Matemática")));
 
-        assertThat(professorService.listar())
+        assertThat(professorService.buscar(" matematica "))
                 .extracting(ProfessorResponse::codigo)
                 .containsExactly("PROF-1");
+    }
+
+    @Test
+    void deveIgnorarCompetenciaEmBranco() {
+        when(professorRepository.buscarPorCompetencia(null)).thenReturn(List.of());
+
+        assertThat(professorService.buscar(" ")).isEmpty();
     }
 
     @Test

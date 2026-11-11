@@ -17,9 +17,14 @@ jobs:
     name: build-test-coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - name: Obter código
         uses: actions/checkout@v4
+        with:
+          # Histórico completo para o SonarCloud identificar o código novo da PR.
+          fetch-depth: 0
 
       - name: Configurar Java 21
         uses: actions/setup-java@v4
@@ -34,6 +39,13 @@ jobs:
       - name: Validar avaliador de disputa (fixtures sinteticas)
         shell: pwsh
         run: ./performance/testar-avaliador.ps1
+
+      # Envia a análise com o relatório do JaCoCo. Fica desligada até existir o
+      # segredo SONAR_TOKEN e a análise automática ser desativada no SonarCloud.
+      # Espera o resultado do Quality Gate: gate reprovado deixa o CI vermelho.
+      - name: Analisar no SonarCloud com cobertura
+        if: env.SONAR_TOKEN != ''
+        run: mvn -B sonar:sonar -Dsonar.qualitygate.wait=true
 
       - name: Publicar relatórios
         if: always()

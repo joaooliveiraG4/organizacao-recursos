@@ -1,6 +1,9 @@
 # Arquitetura
 
-Esta pasta receberá os diagramas C4, cenários ATAM, utility tree, riscos e trade-offs. Decisões arquiteturais ficam em `docs/adr`.
+Decisões arquiteturais ficam em `docs/adr`.
+
+- [Modelo C4](c4.md): contexto, containers e componentes da API, com a situação de cada parte.
+- [Utility tree](utility-tree.md): cenários de qualidade mensuráveis, riscos, pontos de sensibilidade e trade-offs.
 
 ## Direção inicial
 

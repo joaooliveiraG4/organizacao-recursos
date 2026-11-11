@@ -28,6 +28,11 @@ management:
     health:
       show-details: never
 
+notificacao:
+  # RF-11: serviço externo de notificação (simulado com WireMock nos testes).
+  url: ${NOTIFICACAO_URL:http://localhost:8089/notificacoes}
+  timeout: ${NOTIFICACAO_TIMEOUT:2s}
+
 server:
   error:
     include-message: never

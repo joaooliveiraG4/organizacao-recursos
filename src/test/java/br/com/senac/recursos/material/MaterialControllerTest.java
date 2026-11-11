@@ -3,6 +3,7 @@ package br.com.senac.recursos.material;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -17,6 +18,8 @@ import br.com.senac.recursos.catalogo.RecursoJaCadastradoException;
 import br.com.senac.recursos.catalogo.RecursoNaoEncontradoException;
 import br.com.senac.recursos.config.SecurityConfiguration;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -28,7 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MaterialController.class)
 @Import({SecurityConfiguration.class, CatalogoExceptionHandler.class})
-@WithMockUser
+@WithMockUser(roles = "ADMINISTRADOR")
 class MaterialControllerTest {
 
     @Autowired
@@ -36,6 +39,28 @@ class MaterialControllerTest {
 
     @MockitoBean
     private MaterialService materialService;
+
+    @ParameterizedTest(name = "{0} não cadastra material")
+    @ValueSource(strings = {"SOLICITANTE", "RESPONSAVEL"})
+    void perfilSemPermissaoRecebe403AoCadastrar(String perfil) throws Exception {
+        mockMvc.perform(post("/api/v1/materiais")
+                        .with(user("pessoa@exemplo.test").roles(perfil))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"codigo\":\"MAT-1\",\"nome\":\"Projetor\","
+                                + "\"tipo\":\"audiovisual\",\"quantidade\":2}"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(materialService);
+    }
+
+    @ParameterizedTest(name = "{0} consulta materiais")
+    @ValueSource(strings = {"SOLICITANTE", "RESPONSAVEL"})
+    void qualquerPerfilAutenticadoConsulta(String perfil) throws Exception {
+        when(materialService.buscar(null)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/materiais").with(user("pessoa@exemplo.test").roles(perfil)))
+                .andExpect(status().isOk());
+    }
 
     @Test
     void deveCriarMaterialComLocation() throws Exception {
@@ -55,12 +80,22 @@ class MaterialControllerTest {
 
     @Test
     void deveListarMateriais() throws Exception {
-        when(materialService.listar()).thenReturn(
+        when(materialService.buscar(null)).thenReturn(
                 List.of(new MaterialResponse(UUID.randomUUID(), "MAT-1", "Projetor", "audiovisual", 2)));
 
         mockMvc.perform(get("/api/v1/materiais"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].codigo").value("MAT-1"));
+    }
+
+    @Test
+    void devePassarTipoNaBuscaDeMateriais() throws Exception {
+        when(materialService.buscar("audio")).thenReturn(
+                List.of(new MaterialResponse(UUID.randomUUID(), "MAT-1", "Projetor", "audiovisual", 2)));
+
+        mockMvc.perform(get("/api/v1/materiais").param("tipo", "audio"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].tipo").value("audiovisual"));
     }
 
     @Test

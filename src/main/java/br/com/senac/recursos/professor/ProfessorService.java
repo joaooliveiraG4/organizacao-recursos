@@ -3,6 +3,7 @@ package br.com.senac.recursos.professor;
 import java.util.List;
 import java.util.UUID;
 
+import br.com.senac.recursos.catalogo.FiltroCatalogo;
 import br.com.senac.recursos.catalogo.RecursoJaCadastradoException;
 import br.com.senac.recursos.catalogo.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
@@ -29,8 +30,10 @@ class ProfessorService {
     }
 
     @Transactional(readOnly = true)
-    List<ProfessorResponse> listar() {
-        return professorRepository.findAllByOrderByCodigoAsc().stream()
+    List<ProfessorResponse> buscar(String competencia) {
+        return professorRepository.buscarPorCompetencia(
+                        FiltroCatalogo.normalizarTexto(competencia))
+                .stream()
                 .map(ProfessorResponse::from)
                 .toList();
     }
