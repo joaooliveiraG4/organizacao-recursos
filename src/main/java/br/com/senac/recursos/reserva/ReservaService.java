@@ -53,6 +53,7 @@ public class ReservaService {
         var periodo = validarPeriodo(inicio, fim);
         var recursos = recursos(sala, professor, materiais);
         var restrita = bloquearRecursos(recursos);
+        exigirForaDeManutencao(recursos);
         var reserva = new Reserva(solicitante, periodo);
         if (!restrita) {
             reserva.aprovar();
@@ -85,6 +86,7 @@ public class ReservaService {
 
         // Bloqueia os recursos antigos e novos antes de trocar as alocações.
         var restrita = bloquearRecursos(envolvidos);
+        exigirForaDeManutencao(novos);
         var anterior = reserva.getEstado();
         reserva.editar(periodo, restrita);
         jdbc.update("DELETE FROM reserva_recurso WHERE reserva_id = ?", id);
@@ -186,6 +188,20 @@ public class ReservaService {
             materiais.stream().sorted().map(id -> new Recurso(Tipo.MATERIAL, id)).forEach(recursos::add);
         }
         return recursos;
+    }
+
+    /**
+     * RF-08: recurso em manutenção não pode entrar em reserva nova nem editada.
+     * Roda depois do FOR NO KEY UPDATE, então a marcação não muda no meio da operação.
+     */
+    private void exigirForaDeManutencao(Iterable<Recurso> recursos) {
+        for (var recurso : recursos) {
+            Boolean emManutencao = jdbc.queryForObject("SELECT em_manutencao FROM " + recurso.tipo().tabela
+                    + " WHERE id = ?", Boolean.class, recurso.id());
+            if (Boolean.TRUE.equals(emManutencao)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Recurso em manutenção.");
+            }
+        }
     }
 
     private boolean bloquearRecursos(Iterable<Recurso> recursos) {
