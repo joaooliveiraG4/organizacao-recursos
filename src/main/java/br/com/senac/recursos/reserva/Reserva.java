@@ -54,6 +54,18 @@ public class Reserva {
         estado = EstadoReserva.CANCELADA;
     }
 
+    /** RF-07: aprovação manual é exigida quando a reserva usa recurso restrito. */
+    void aprovar() {
+        exigir(EstadoReserva.SOLICITADA);
+        estado = EstadoReserva.APROVADA;
+    }
+
+    /** RF-07: Responsável recusa a reserva pendente. */
+    void rejeitar() {
+        exigir(EstadoReserva.SOLICITADA);
+        estado = EstadoReserva.REJEITADA;
+    }
+
     /** RF-09: material/sala retirados; só a partir de APROVADA. */
     void registrarRetirada() {
         exigir(EstadoReserva.APROVADA);
