@@ -64,6 +64,13 @@ public class ReservaController {
         return new ReservaCriada(reserva.getId(), reserva.getEstado());
     }
 
+    @PostMapping("/{id}/rejeitar")
+    @PreAuthorize("hasRole('RESPONSAVEL')")
+    public ReservaCriada rejeitar(@AuthenticationPrincipal UsuarioAutenticado usuario, @PathVariable UUID id) {
+        var reserva = reservas.rejeitar(usuario, id);
+        return new ReservaCriada(reserva.getId(), reserva.getEstado());
+    }
+
     public record CriarReserva(@NotNull UUID salaId, UUID professorId,
             Set<@NotNull UUID> materialIds, @NotNull Instant inicio, @NotNull Instant fim) {
     }

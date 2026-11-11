@@ -60,6 +60,12 @@ public class Reserva {
         estado = EstadoReserva.APROVADA;
     }
 
+    /** RF-07: Responsável recusa a reserva pendente. */
+    void rejeitar() {
+        exigir(EstadoReserva.SOLICITADA);
+        estado = EstadoReserva.REJEITADA;
+    }
+
     /** RF-09: material/sala retirados; só a partir de APROVADA. */
     void registrarRetirada() {
         exigir(EstadoReserva.APROVADA);

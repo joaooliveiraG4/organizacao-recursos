@@ -43,3 +43,8 @@ Somente Responsável ou Administrador registra; Solicitante recebe `403`.
 Estado diferente do exigido, inclusive repetir a mesma operação, retorna `409` sem alterar a reserva nem gerar evento. Reserva inexistente retorna `404`. A reserva é travada durante a operação: duas retiradas simultâneas resultam em uma aceita e uma `409`. Cada registro gera um evento de auditoria (`RETIRADA_REGISTRADA` ou `DEVOLUCAO_REGISTRADA`) com o usuário autenticado como autor, na mesma transação.
 
 Fora do escopo: regra de horário (retirar antes do início ou devolver após o fim é aceito) e controle de quantidade de material (ver ADR 0005).
+
+## Rejeição e notificação (RF-07 + RF-11)
+
+- `POST /api/v1/reservas/{id}/rejeitar` (somente Responsável): `SOLICITADA` → `REJEITADA`, libera o horário e retorna `200`. Outro estado retorna `409`; outro perfil, `403`.
+- Aprovação e rejeição publicam uma `Notificacao` (`RESERVA_APROVADA` ou `RESERVA_REJEITADA`) para o solicitante. O envio ao provedor acontece só depois do commit, em segundo plano ([contrato da notificação](notificacao.md)).
