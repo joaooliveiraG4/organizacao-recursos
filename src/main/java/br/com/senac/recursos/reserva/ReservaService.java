@@ -21,7 +21,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.context.ApplicationEventPublisher;
+
 import br.com.senac.recursos.auditoria.AuditoriaService;
+import br.com.senac.recursos.notificacao.Notificacao;
+import br.com.senac.recursos.notificacao.TipoNotificacao;
 import br.com.senac.recursos.seguranca.Perfil;
 import br.com.senac.recursos.seguranca.UsuarioAutenticado;
 
@@ -32,13 +36,15 @@ public class ReservaService {
     private final JdbcTemplate jdbc;
     private final AuditoriaService auditoria;
     private final RegistroConflitos conflitos;
+    private final ApplicationEventPublisher eventos;
 
     public ReservaService(EntityManager entidades, JdbcTemplate jdbc, AuditoriaService auditoria,
-            RegistroConflitos conflitos) {
+            RegistroConflitos conflitos, ApplicationEventPublisher eventos) {
         this.entidades = entidades;
         this.jdbc = jdbc;
         this.auditoria = auditoria;
         this.conflitos = conflitos;
+        this.eventos = eventos;
     }
 
     @Transactional
@@ -59,6 +65,9 @@ public class ReservaService {
         }
         auditoria.registrar("RESERVA", reserva.getId(), "RESERVA_CRIADA", solicitante,
                 Map.of("para", reserva.getEstado().name()));
+        if (!restrita) {
+            notificar(reserva, TipoNotificacao.RESERVA_APROVADA);
+        }
         return reserva;
     }
 
@@ -97,11 +106,7 @@ public class ReservaService {
 
     @Transactional
     public Reserva aprovar(UsuarioAutenticado usuario, UUID id) {
-        var reserva = entidades.find(Reserva.class, id, LockModeType.PESSIMISTIC_WRITE);
-        if (reserva == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva não encontrada.");
-        }
-
+        var reserva = buscarParaDecisao(id);
         var anterior = reserva.getEstado();
         try {
             reserva.aprovar();
@@ -110,7 +115,38 @@ public class ReservaService {
                     "A reserva não pode ser aprovada nesse estado.");
         }
         registrarMudanca(reserva, anterior, "RESERVA_APROVADA", usuario.id());
+        notificar(reserva, TipoNotificacao.RESERVA_APROVADA);
         return reserva;
+    }
+
+    /** RF-07: Responsável recusa a reserva pendente; o horário é liberado. */
+    @Transactional
+    public Reserva rejeitar(UsuarioAutenticado usuario, UUID id) {
+        var reserva = buscarParaDecisao(id);
+        var anterior = reserva.getEstado();
+        try {
+            reserva.rejeitar();
+        } catch (TransicaoInvalidaException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A reserva não pode ser rejeitada nesse estado.");
+        }
+        jdbc.update("UPDATE reserva_recurso SET ativo = false WHERE reserva_id = ? AND ativo", id);
+        registrarMudanca(reserva, anterior, "RESERVA_REJEITADA", usuario.id());
+        notificar(reserva, TipoNotificacao.RESERVA_REJEITADA);
+        return reserva;
+    }
+
+    private Reserva buscarParaDecisao(UUID id) {
+        var reserva = entidades.find(Reserva.class, id, LockModeType.PESSIMISTIC_WRITE);
+        if (reserva == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva não encontrada.");
+        }
+        return reserva;
+    }
+
+    /** RF-11: publicado dentro da transação; o envio acontece só após o commit. */
+    private void notificar(Reserva reserva, TipoNotificacao tipo) {
+        eventos.publishEvent(new Notificacao(reserva.getSolicitanteId(), tipo, reserva.getId()));
     }
 
     private Reserva buscarEditavel(UsuarioAutenticado usuario, UUID id) {

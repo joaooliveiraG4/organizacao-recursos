@@ -22,17 +22,22 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import br.com.senac.recursos.notificacao.Notificacao;
+import br.com.senac.recursos.notificacao.TipoNotificacao;
 import br.com.senac.recursos.seguranca.Perfil;
 
 /** RF-07: aprovação de reserva restrita apenas pelo perfil Responsável. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
+@RecordApplicationEvents
 class AprovacaoReservaIntegrationTest {
 
     private static final String SENHA = "senha-de-teste";
@@ -49,6 +54,9 @@ class AprovacaoReservaIntegrationTest {
 
     @Autowired
     private PasswordEncoder senhas;
+
+    @Autowired
+    private ApplicationEvents eventos;
 
     @DynamicPropertySource
     static void configurarBanco(DynamicPropertyRegistry registry) {
@@ -86,6 +94,8 @@ class AprovacaoReservaIntegrationTest {
         assertThat(jdbc.queryForList("""
                 SELECT action FROM audit_event WHERE aggregate_id = ? ORDER BY sequence_number
                 """, String.class, reserva)).containsExactly("RESERVA_CRIADA");
+        assertThat(eventos.stream(Notificacao.class))
+                .containsExactly(new Notificacao(solicitante, TipoNotificacao.RESERVA_APROVADA, reserva));
     }
 
     @ParameterizedTest(name = "perfil {0} recebe 403 ao aprovar")
@@ -149,6 +159,57 @@ class AprovacaoReservaIntegrationTest {
         mvc.perform(post("/api/v1/reservas/{id}/aprovar", UUID.randomUUID())
                         .with(login(cadastrarUsuario("RESPONSAVEL"))))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void aprovacaoPublicaNotificacaoParaOSolicitante() throws Exception {
+        var solicitante = cadastrarUsuario("SOLICITANTE");
+        var reserva = criarReserva(solicitante, cadastrarSala(true), "SOLICITADA");
+
+        mvc.perform(post("/api/v1/reservas/{id}/aprovar", reserva).with(login(cadastrarUsuario("RESPONSAVEL"))))
+                .andExpect(status().isOk());
+
+        assertThat(eventos.stream(Notificacao.class))
+                .containsExactly(new Notificacao(solicitante, TipoNotificacao.RESERVA_APROVADA, reserva));
+    }
+
+    @Test
+    void rejeicaoLiberaOHorarioAuditaENotifica() throws Exception {
+        var solicitante = cadastrarUsuario("SOLICITANTE");
+        var responsavel = cadastrarUsuario("RESPONSAVEL");
+        var sala = cadastrarSala(true);
+        var reserva = criarReserva(solicitante, sala, "SOLICITADA");
+
+        mvc.perform(post("/api/v1/reservas/{id}/rejeitar", reserva).with(login(responsavel)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("REJEITADA"));
+
+        assertThat(estado(reserva)).isEqualTo("REJEITADA");
+        assertThat(jdbc.queryForObject("""
+                SELECT actor_id FROM audit_event WHERE aggregate_id = ? AND action = 'RESERVA_REJEITADA'
+                """, UUID.class, reserva)).isEqualTo(responsavel);
+        assertThat(eventos.stream(Notificacao.class))
+                .containsExactly(new Notificacao(solicitante, TipoNotificacao.RESERVA_REJEITADA, reserva));
+        // Horário liberado: a mesma sala pode ser pedida de novo no mesmo período.
+        criarReserva(solicitante, sala, "SOLICITADA");
+    }
+
+    @Test
+    void solicitanteNaoRejeitaEReservaAprovadaNaoERejeitada() throws Exception {
+        var solicitante = cadastrarUsuario("SOLICITANTE");
+        var responsavel = cadastrarUsuario("RESPONSAVEL");
+        var reserva = criarReserva(solicitante, cadastrarSala(true), "SOLICITADA");
+
+        mvc.perform(post("/api/v1/reservas/{id}/rejeitar", reserva).with(login(solicitante)))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/reservas/{id}/aprovar", reserva).with(login(responsavel)))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/v1/reservas/{id}/rejeitar", reserva).with(login(responsavel)))
+                .andExpect(status().isConflict());
+
+        assertThat(estado(reserva)).isEqualTo("APROVADA");
+        assertThat(eventos.stream(Notificacao.class).map(Notificacao::tipo))
+                .containsExactly(TipoNotificacao.RESERVA_APROVADA);
     }
 
     private UUID criarReserva(UUID solicitante, UUID sala, String estadoEsperado) throws Exception {
