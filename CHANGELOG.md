@@ -1,5 +1,16 @@
 # Changelog
 
+## [v1.0.0-rc2] — 12/11/2026
+
+### Correção
+
+- **D-09 (RF-06):** com 50 pedidos simultâneos pela mesma sala, o pool de conexões esgotava e os perdedores recebiam timeout em vez de `409`. O conflito evitado agora é gravado depois que a transação da reserva termina. Teste de regressão com 20 pedidos simultâneos.
+
+### Evidência nova
+
+- JMeter com 50 usuários disputando a mesma sala, 3 rodadas: 1 `201`, 49 `409` e 0 erro técnico em cada, com persistência conferida no banco ([resultado-02](docs/performance/resultado-02.md)). O p95 ficou entre 1,1 s e 1,5 s (risco aceito R1).
+- 225 testes, 0 pulados.
+
 ## [v1.0.0-rc1] — 12/11/2026
 
 Primeira release candidate do sistema de organização de salas, professores e materiais.

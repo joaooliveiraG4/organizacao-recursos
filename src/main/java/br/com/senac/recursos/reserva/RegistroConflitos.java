@@ -11,7 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * RF-12 — guarda cada reserva recusada por sobreposição. Usa uma transação
  * própria (REQUIRES_NEW) porque a transação da reserva é desfeita no 409;
- * sem isso, o conflito evitado sumiria junto.
+ * sem isso, o conflito evitado sumiria junto. É chamado pelo controller depois
+ * que a transação da reserva terminou: chamado de dentro dela, cada pedido
+ * perdedor segurava duas conexões e a disputa esgotava o pool (D-09).
  */
 @Component
 public class RegistroConflitos {

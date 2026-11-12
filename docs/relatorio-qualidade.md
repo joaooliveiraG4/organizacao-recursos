@@ -22,7 +22,7 @@ Data: 11/11/2026. Base medida: `main` no commit `9202a6b` (todas as PRs até a #
 | Integração externa simulada (WireMock) | RF-11: sucesso, timeout, 3xx/4xx/5xx, provedor fora do ar | 2 classes |
 | API caixa-preta (MockMvc + HTTP Basic real) | reservas, retirada/devolução, relatório, catálogo | — |
 | Concorrência | RF-06 (duas criações → 201 + 409) e RF-09 U07 (duas retiradas → 200 + 409) | 3 testes |
-| Desempenho/disputa (JMeter) | plano e avaliador na PR #9 | ver pendências |
+| Desempenho/disputa (JMeter) | plano e avaliador na PR #9; executado com 50 usuários ([resultado-02](performance/resultado-02.md)) | 4 rodadas |
 
 **Gate contra falso verde:** desde a PR #7 os testes de integração não usam `disabledWithoutDocker`. Sem Docker, a suíte reprova em vez de pular (comprovado em 11/11, quando o Docker estava desligado).
 
@@ -48,5 +48,5 @@ ADR 0001 (stack e PostgreSQL), 0002 (autenticação e perfis), 0003 (auditoria t
 
 - **Requisitos:** os 14 RFs estão implementados na `main` (o RF-05 completou os testes de professor e material na PR #22), com teste e evidência na RTM. RF-03 cobre filtros cadastrais; a disponibilidade por horário é garantida na reserva (RF-05/06), não como filtro de pesquisa.
 - **SonarCloud:** Quality Gate aprovado na `main`; S2077 corrigido no código; S4502 aceito ([ADR 0006](adr/0006-csrf-em-api-stateless.md)).
-- **JMeter:** a ferramenta de disputa (PR #9) está pronta; a execução contra a API rodando fica registrada quando a #9 entrar.
+- **JMeter:** executado com 50 usuários na mesma sala ([resultado-02](performance/resultado-02.md)). A primeira execução achou o defeito D-09 (pool esgotado), já corrigido. Integridade aprovada; p95 de 1,1–1,5 s, acima da meta proposta de 500 ms (risco aceito R1).
 - **Fora do escopo por decisão:** reenvio de notificação (outbox), quantidade de material (ADR 0005), regra de horário para retirada/devolução, horas do relatório sem recorte nas bordas do período.

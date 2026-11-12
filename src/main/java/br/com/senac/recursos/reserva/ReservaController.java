@@ -26,9 +26,11 @@ import br.com.senac.recursos.seguranca.UsuarioAutenticado;
 public class ReservaController {
 
     private final ReservaService reservas;
+    private final RegistroConflitos conflitos;
 
-    public ReservaController(ReservaService reservas) {
+    public ReservaController(ReservaService reservas, RegistroConflitos conflitos) {
         this.reservas = reservas;
+        this.conflitos = conflitos;
     }
 
     @PostMapping
@@ -36,8 +38,8 @@ public class ReservaController {
     @ResponseStatus(HttpStatus.CREATED)
     public ReservaCriada criar(@AuthenticationPrincipal UsuarioAutenticado usuario,
             @Valid @RequestBody CriarReserva pedido) {
-        var reserva = reservas.criar(usuario.id(), pedido.inicio(), pedido.fim(),
-                pedido.salaId(), pedido.professorId(), pedido.materialIds());
+        var reserva = registrandoConflito(() -> reservas.criar(usuario.id(), pedido.inicio(), pedido.fim(),
+                pedido.salaId(), pedido.professorId(), pedido.materialIds()));
         return new ReservaCriada(reserva.getId(), reserva.getEstado());
     }
 
@@ -45,9 +47,22 @@ public class ReservaController {
     @PreAuthorize("hasAnyRole('SOLICITANTE', 'ADMINISTRADOR')")
     public ReservaCriada editar(@AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID id, @Valid @RequestBody CriarReserva pedido) {
-        var reserva = reservas.editar(usuario, id, pedido.inicio(), pedido.fim(),
-                pedido.salaId(), pedido.professorId(), pedido.materialIds());
+        var reserva = registrandoConflito(() -> reservas.editar(usuario, id, pedido.inicio(), pedido.fim(),
+                pedido.salaId(), pedido.professorId(), pedido.materialIds()));
         return new ReservaCriada(reserva.getId(), reserva.getEstado());
+    }
+
+    /**
+     * RF-12 sem esgotar o pool (D-09): a transação da reserva já foi desfeita e
+     * devolveu a conexão; só então o conflito é gravado, em transação própria.
+     */
+    private Reserva registrandoConflito(java.util.function.Supplier<Reserva> operacao) {
+        try {
+            return operacao.get();
+        } catch (ConflitoReservaException conflito) {
+            conflitos.registrar(conflito.tipoRecurso(), conflito.recursoId(), conflito.periodo());
+            throw conflito;
+        }
     }
 
     @DeleteMapping("/{id}")
