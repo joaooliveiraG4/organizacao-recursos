@@ -23,8 +23,8 @@
         <wiremock.version>3.13.1</wiremock.version>
         <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
         <!-- SonarCloud via CI (ADR 0004): a análise automática não importa a cobertura do JaCoCo. -->
-        <sonar.projectKey>joaooliveiraG4_organizacao-recursos</sonar.projectKey>
-        <sonar.organization>joaooliveirag4</sonar.organization>
+        <sonar.projectKey>joaovictordasilvaolveira_organizacao-recursos</sonar.projectKey>
+        <sonar.organization>joaovictordasilvaolveira</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectName>Organização de Recursos</sonar.projectName>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
