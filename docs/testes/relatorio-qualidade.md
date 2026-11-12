@@ -47,6 +47,6 @@ ADR 0001 (stack e PostgreSQL), 0002 (autenticação e perfis), 0003 (auditoria t
 ## Pendências e limitações conhecidas
 
 - **Requisitos:** os 14 RFs estão implementados na `main`, com teste e evidência na RTM. RF-03 cobre filtros cadastrais; a disponibilidade por horário é garantida na reserva (RF-05/06), não como filtro de pesquisa.
-- **SonarCloud:** o repositório foi transferido para a conta pessoal em 10/11; a análise com cobertura do JaCoCo depende do `SONAR_TOKEN` no projeto novo. Até lá, o Sonar mostra 0,0% de cobertura em código novo (a cobertura real é a medida acima).
+- **SonarCloud:** Quality Gate aprovado na `main`; S2077 corrigido no código; S4502 aceito ([ADR 0006](../adr/0006-csrf-em-api-stateless.md)).
 - **JMeter:** a ferramenta de disputa (PR #9) está pronta; a execução contra a API rodando fica registrada quando a #9 entrar.
 - **Fora do escopo por decisão:** reenvio de notificação (outbox), quantidade de material (ADR 0005), regra de horário para retirada/devolução, horas do relatório sem recorte nas bordas do período.
