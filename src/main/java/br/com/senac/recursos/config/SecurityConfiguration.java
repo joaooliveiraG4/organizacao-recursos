@@ -31,6 +31,8 @@ public class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
         var respostaNegada = new RespostaAcessoNegado(objectMapper);
         return http
+                // CSRF desligado de propósito: API sem sessão e sem cookie (STATELESS,
+                // HTTP Basic). Justificativa e riscos no ADR 0006.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
