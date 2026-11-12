@@ -210,6 +210,46 @@ class ReservaIntegrationTest {
                 Long.class, solicitante)).isEqualTo(1L);
     }
 
+    /**
+     * RF-06 sob carga (D-09): com mais pedidos simultâneos que conexões no pool
+     * (10), os perdedores não podem ficar presos esperando uma segunda conexão
+     * para gravar o conflito. Todos respondem rápido: um 201 e o resto 409.
+     */
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void disputaComMaisPedidosQueConexoesRespondeTodosSemEsgotarOPool() throws Exception {
+        int pedidos = 20;
+        var senha = UUID.randomUUID().toString();
+        var hash = senhas.encode(senha);
+        var sala = cadastrarSala(false);
+        var pedido = pedidoPara(sala);
+        var prontas = new CountDownLatch(pedidos);
+        var iniciar = new CountDownLatch(1);
+
+        try (var executor = Executors.newFixedThreadPool(pedidos)) {
+            var respostas = new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
+            for (int i = 0; i < pedidos; i++) {
+                var solicitante = cadastrarSolicitante(hash);
+                respostas.add(executor.submit(() -> postarReserva(solicitante, senha, pedido, prontas, iniciar)));
+            }
+            assertThat(prontas.await(10, TimeUnit.SECONDS)).isTrue();
+            iniciar.countDown();
+            var codigos = new java.util.ArrayList<Integer>();
+            for (var resposta : respostas) {
+                codigos.add(resposta.get(15, TimeUnit.SECONDS));
+            }
+            assertThat(codigos).containsOnly(201, 409);
+            assertThat(codigos).filteredOn(c -> c == 201).hasSize(1);
+        }
+
+        assertThat(jdbc.queryForObject("""
+                SELECT count(*) FROM reserva_recurso WHERE recurso_id = ? AND ativo
+                """, Long.class, sala)).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("""
+                SELECT count(*) FROM conflito_evitado WHERE recurso_id = ?
+                """, Long.class, sala)).isEqualTo(pedidos - 1L);
+    }
+
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void edicaoRestritaVoltaParaSolicitadaECancelamentoLiberaHorario() throws Exception {
