@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
+    # Release candidate: o run fica ligado à tag (ex.: v1.0.0-rc1) para servir de evidência.
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -44,7 +46,8 @@ jobs:
       # segredo SONAR_TOKEN e a análise automática ser desativada no SonarCloud.
       # Espera o resultado do Quality Gate: gate reprovado deixa o CI vermelho.
       - name: Analisar no SonarCloud com cobertura
-        if: env.SONAR_TOKEN != ''
+        # Na tag, o mesmo commit já foi analisado pelo push na main.
+        if: env.SONAR_TOKEN != '' && !startsWith(github.ref, 'refs/tags/')
         run: mvn -B sonar:sonar -Dsonar.qualitygate.wait=true
 
       - name: Publicar relatórios

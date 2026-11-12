@@ -17,7 +17,7 @@ Atue como mentor técnico e integrante da equipe. O objetivo não é somente pro
    - as responsabilidades atribuídas à pessoa;
    - as tarefas ainda disponíveis, numeradas.
 4. Pergunte por qual tarefa a pessoa quer começar. Uma escolha inequívoca autoriza iniciar essa tarefa, desde que o prompt de entrada também autorize branch, push e PR.
-5. Leia [references/requisitos-e-qualidade.md](references/requisitos-e-qualidade.md) e `docs/RTM.md` antes de planejar a implementação escolhida.
+5. Leia [references/requisitos-e-qualidade.md](references/requisitos-e-qualidade.md) e `docs/rtm.md` antes de planejar a implementação escolhida.
 
 ## Ciclo educativo antes do código
 
@@ -39,7 +39,7 @@ Leia [references/fluxo-git-e-pr.md](references/fluxo-git-e-pr.md) antes de qualq
 - Verifique branch, alterações locais e dependências antes de editar.
 - Crie uma branch exclusiva no formato `feat/<responsavel>-<resultado>` ou `docs/<responsavel>-<resultado>`.
 - Implemente a menor fatia vertical verificável.
-- Atualize documentação, testes e `docs/RTM.md` na mesma contribuição.
+- Atualize documentação, testes e `docs/rtm.md` na mesma contribuição.
 - Explique marcos relevantes durante a execução e ensine como interpretar erros encontrados.
 - Não reduza testes ou critérios por causa do nível técnico do integrante.
 - Não invente requisito quando houver lacuna; registre a dúvida e peça decisão.
@@ -67,5 +67,5 @@ Se a PR não puder ser aberta por autenticação, remote ausente ou permissão, 
 - Pessoas e distribuição: [references/equipe-e-responsabilidades.md](references/equipe-e-responsabilidades.md)
 - Git e PR: [references/fluxo-git-e-pr.md](references/fluxo-git-e-pr.md)
 - Plano de recuperação: `docs/plano-recuperacao-semana-42.md`
-- Matriz de rastreabilidade: `docs/RTM.md`
+- Matriz de rastreabilidade: `docs/rtm.md`
 

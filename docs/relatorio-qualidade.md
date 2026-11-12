@@ -1,6 +1,6 @@
 # Relatório de qualidade — release candidate
 
-Data: 11/11/2026. Base medida: `main` no commit `9202a6b` (todas as PRs até a #18). Comando: `.mvnw.cmd clean verify` com Docker Desktop (PostgreSQL 17 real via Testcontainers). Os links de CI de cada requisito estão na [RTM](../RTM.md).
+Data: 11/11/2026. Base medida: `main` no commit `9202a6b` (todas as PRs até a #18). Comando: `.mvnw.cmd clean verify` com Docker Desktop (PostgreSQL 17 real via Testcontainers). Os links de CI de cada requisito estão na [RTM](rtm.md).
 
 ## Resultado geral
 
@@ -46,7 +46,7 @@ ADR 0001 (stack e PostgreSQL), 0002 (autenticação e perfis), 0003 (auditoria t
 
 ## Pendências e limitações conhecidas
 
-- **Requisitos:** os 14 RFs estão implementados na `main`, com teste e evidência na RTM. RF-03 cobre filtros cadastrais; a disponibilidade por horário é garantida na reserva (RF-05/06), não como filtro de pesquisa.
-- **SonarCloud:** Quality Gate aprovado na `main`; S2077 corrigido no código; S4502 aceito ([ADR 0006](../adr/0006-csrf-em-api-stateless.md)).
+- **Requisitos:** os 14 RFs estão implementados na `main` (o RF-05 completou os testes de professor e material na PR #22), com teste e evidência na RTM. RF-03 cobre filtros cadastrais; a disponibilidade por horário é garantida na reserva (RF-05/06), não como filtro de pesquisa.
+- **SonarCloud:** Quality Gate aprovado na `main`; S2077 corrigido no código; S4502 aceito ([ADR 0006](adr/0006-csrf-em-api-stateless.md)).
 - **JMeter:** a ferramenta de disputa (PR #9) está pronta; a execução contra a API rodando fica registrada quando a #9 entrar.
 - **Fora do escopo por decisão:** reenvio de notificação (outbox), quantidade de material (ADR 0005), regra de horário para retirada/devolução, horas do relatório sem recorte nas bordas do período.

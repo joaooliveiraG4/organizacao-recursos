@@ -168,6 +168,50 @@ class ReservaIntegrationTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void apiRecusaSobreposicaoDoMesmoProfessorEmSalasDiferentes() throws Exception {
+        var senha = UUID.randomUUID().toString();
+        var solicitante = cadastrarSolicitante(senhas.encode(senha));
+        var professor = cadastrarProfessor();
+        var primeiraSala = cadastrarSala(false);
+        var segundaSala = cadastrarSala(false);
+        var primeiraReserva = pedidoComProfessor(primeiraSala, professor);
+        var segundaReserva = pedidoComProfessor(segundaSala, professor);
+        criarPelaApi(solicitante, senha, primeiraReserva);
+
+        mvc.perform(post("/api/v1/reservas")
+                        .with(httpBasic(solicitante + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON).content(segundaReserva))
+                .andExpect(status().isConflict());
+
+        assertThat(alocacoesAtivas("PROFESSOR", professor)).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM reserva WHERE solicitante_id = ?",
+                Long.class, solicitante)).isEqualTo(1L);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void apiRecusaSobreposicaoDoMesmoMaterialEmSalasDiferentes() throws Exception {
+        var senha = UUID.randomUUID().toString();
+        var solicitante = cadastrarSolicitante(senhas.encode(senha));
+        var material = cadastrarMaterial();
+        var primeiraSala = cadastrarSala(false);
+        var segundaSala = cadastrarSala(false);
+        var primeiraReserva = pedidoComMaterial(primeiraSala, material);
+        var segundaReserva = pedidoComMaterial(segundaSala, material);
+        criarPelaApi(solicitante, senha, primeiraReserva);
+
+        mvc.perform(post("/api/v1/reservas")
+                        .with(httpBasic(solicitante + "@example.test", senha))
+                        .contentType(MediaType.APPLICATION_JSON).content(segundaReserva))
+                .andExpect(status().isConflict());
+
+        assertThat(alocacoesAtivas("MATERIAL", material)).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM reserva WHERE solicitante_id = ?",
+                Long.class, solicitante)).isEqualTo(1L);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void edicaoRestritaVoltaParaSolicitadaECancelamentoLiberaHorario() throws Exception {
         var senha = UUID.randomUUID().toString();
         var solicitante = cadastrarSolicitante(senhas.encode(senha));
@@ -279,6 +323,42 @@ class ReservaIntegrationTest {
         return UUID.fromString(id);
     }
 
+    private UUID cadastrarProfessor() {
+        var professor = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO professor (id, codigo, nome, competencia)
+                VALUES (?, ?, 'Professor de teste', 'Matemática')
+                """, professor, professor.toString().substring(0, 20));
+        return professor;
+    }
+
+    private UUID cadastrarMaterial() {
+        var material = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO material (id, codigo, nome, tipo, quantidade)
+                VALUES (?, ?, 'Material de teste', 'Equipamento', 1)
+                """, material, material.toString().substring(0, 20));
+        return material;
+    }
+
+    private long alocacoesAtivas(String tipo, UUID recurso) {
+        return jdbc.queryForObject("""
+                SELECT count(*) FROM reserva_recurso
+                WHERE tipo_recurso = ? AND recurso_id = ? AND ativo
+                """, Long.class, tipo, recurso);
+    }
+
+    private static String pedidoComProfessor(UUID sala, UUID professor) {
+        return """
+                {"salaId":"%s","professorId":"%s","inicio":"%s","fim":"%s"}
+                """.formatted(sala, professor, INICIO, FIM);
+    }
+
+    private static String pedidoComMaterial(UUID sala, UUID material) {
+        return """
+                {"salaId":"%s","materialIds":["%s"],"inicio":"%s","fim":"%s"}
+                """.formatted(sala, material, INICIO, FIM);
+    }
     private UUID cadastrarSala(boolean restrita) {
         var sala = UUID.randomUUID();
         jdbc.update("""
