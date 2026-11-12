@@ -47,7 +47,7 @@ public class ManutencaoController {
     @Transactional
     public EstadoManutencao sala(@AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID id, @Valid @RequestBody PedidoManutencao pedido) {
-        return marcar("sala", "SALA", usuario, id, pedido.emManutencao());
+        return marcar(SQL_SALA, "SALA", usuario, id, pedido.emManutencao());
     }
 
     @PutMapping("/api/v1/materiais/{id}/manutencao")
@@ -55,12 +55,16 @@ public class ManutencaoController {
     @Transactional
     public EstadoManutencao material(@AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID id, @Valid @RequestBody PedidoManutencao pedido) {
-        return marcar("material", "MATERIAL", usuario, id, pedido.emManutencao());
+        return marcar(SQL_MATERIAL, "MATERIAL", usuario, id, pedido.emManutencao());
     }
 
-    private EstadoManutencao marcar(String tabela, String tipo, UsuarioAutenticado usuario, UUID id,
+    // Consultas fixas por tipo: nenhum SQL é montado por concatenação (Sonar java:S2077).
+    private static final String SQL_SALA = "UPDATE sala SET em_manutencao = ? WHERE id = ?";
+    private static final String SQL_MATERIAL = "UPDATE material SET em_manutencao = ? WHERE id = ?";
+
+    private EstadoManutencao marcar(String sql, String tipo, UsuarioAutenticado usuario, UUID id,
             boolean emManutencao) {
-        int alteradas = jdbc.update("UPDATE " + tabela + " SET em_manutencao = ? WHERE id = ?", emManutencao, id);
+        int alteradas = jdbc.update(sql, emManutencao, id);
         if (alteradas == 0) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recurso não encontrado.");
         }
