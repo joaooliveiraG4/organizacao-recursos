@@ -3,8 +3,8 @@
 ## Estado desta entrega
 
 Preparação de Kauã, em 05/11/2026. Há plano JMX parametrizado e avaliador
-dos resultados HTTP com testes próprios. **Ainda não há execução do JMX
-nem evidência de desempenho/concorrência da API de reservas.**
+dos resultados HTTP com testes próprios. **Executado em 12/11/2026 com 50
+usuários: ver [resultado-02](../docs/performance/resultado-02.md).**
 
 A base atual já contém as APIs integradas de reservas, autenticação, salas e
 auditoria, além do catálogo de professores e materiais. O JMeter deve exercitar
@@ -53,7 +53,8 @@ Configure a autenticação pelo canal de desenvolvimento seguro antes de executa
 No PowerShell, substitua os parâmetros pelo contrato aprovado:
 
 ```powershell
-jmeter -n -q performance/jmeter/qa.properties -t performance/jmeter/disputa-reserva.jmx -JbaseUrl=http://localhost:8080 -JreservaPath=ROTA_APROVADA -JpayloadFile=CAMINHO_ABSOLUTO_DO_JSON -Jusers=2 -l performance/resultados/disputa-RODADA.jtl -j performance/resultados/disputa-RODADA.log
+# No PowerShell 5.1 os -J precisam de aspas; sem elas o valor é cortado no ":".
+jmeter -n -q performance/jmeter/qa.properties -t performance/jmeter/disputa-reserva.jmx "-JbaseUrl=http://localhost:8080" "-JreservaPath=ROTA_APROVADA" "-JpayloadFile=CAMINHO_ABSOLUTO_DO_JSON" "-Jusers=2" -l performance/resultados/disputa-RODADA.jtl -j performance/resultados/disputa-RODADA.log
 .\performance\avaliar-disputa.ps1 -Jtl performance/resultados/disputa-RODADA.jtl -Usuarios 2
 ```
 

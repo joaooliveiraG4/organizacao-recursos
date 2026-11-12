@@ -80,6 +80,7 @@ Relatórios:
 - [Checklist de entrega](docs/entrega/checklist.md)
 - [Registro de defeitos](docs/defeitos/README.md)
 - [Resultado da disputa real (RF-06)](docs/performance/resultado-01.md)
+- [Resultado do JMeter com 50 usuários (RF-06)](docs/performance/resultado-02.md)
 - [Sequência crítica: criar reserva](docs/arquitetura/sequencia-reserva.md)
 - [Changelog](CHANGELOG.md)
 - [ADR 0002 — autenticação e perfis](docs/adr/0002-autenticacao-e-perfis.md)
