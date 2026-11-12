@@ -270,6 +270,36 @@ class ReservaIntegrationTest {
                 .isEqualTo(dono);
     }
 
+    /** RF-05: professor e material também não se sobrepõem, mesmo em salas diferentes. */
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void professorEMaterialOcupadosRecusamSegundaReservaNoMesmoHorario() throws Exception {
+        var senha = UUID.randomUUID().toString();
+        var solicitante = cadastrarSolicitante(senhas.encode(senha));
+        var professor = UUID.randomUUID();
+        jdbc.update("INSERT INTO professor (id, codigo, nome, competencia) VALUES (?, ?, 'Ana', 'Java')",
+                professor, "P-" + professor.toString().substring(0, 8));
+        var material = UUID.randomUUID();
+        jdbc.update("INSERT INTO material (id, codigo, nome, tipo, quantidade) VALUES (?, ?, 'Projetor', 'audiovisual', 1)",
+                material, "M-" + material.toString().substring(0, 8));
+        criarPelaApi(solicitante, senha, pedidoCom(cadastrarSala(false),
+                "\"professorId\":\"" + professor + "\",\"materialIds\":[\"" + material + "\"]"));
+
+        for (var recurso : List.of("\"professorId\":\"" + professor + "\"",
+                "\"materialIds\":[\"" + material + "\"]")) {
+            mvc.perform(post("/api/v1/reservas").with(httpBasic(solicitante + "@example.test", senha))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(pedidoCom(cadastrarSala(false), recurso)))
+                    .andExpect(status().isConflict());
+        }
+    }
+
+    private static String pedidoCom(UUID sala, String recurso) {
+        return """
+                {"salaId":"%s","inicio":"%s","fim":"%s",%s}
+                """.formatted(sala, INICIO, FIM, recurso);
+    }
+
     private UUID criarPelaApi(UUID solicitante, String senha, String pedido) throws Exception {
         var resposta = mvc.perform(post("/api/v1/reservas")
                         .with(httpBasic(solicitante + "@example.test", senha))
