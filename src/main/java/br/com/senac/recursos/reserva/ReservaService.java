@@ -196,8 +196,7 @@ public class ReservaService {
      */
     private void exigirForaDeManutencao(Iterable<Recurso> recursos) {
         for (var recurso : recursos) {
-            Boolean emManutencao = jdbc.queryForObject("SELECT em_manutencao FROM " + recurso.tipo().tabela
-                    + " WHERE id = ?", Boolean.class, recurso.id());
+            Boolean emManutencao = jdbc.queryForObject(recurso.tipo().sqlManutencao, Boolean.class, recurso.id());
             if (Boolean.TRUE.equals(emManutencao)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Recurso em manutenção.");
             }
@@ -210,8 +209,7 @@ public class ReservaService {
         ordenados.sort(Comparator.comparing(Recurso::tipo).thenComparing(Recurso::id));
         boolean restrito = false;
         for (var recurso : ordenados) {
-            var encontrados = jdbc.queryForList("SELECT restrito FROM " + recurso.tipo().tabela
-                    + " WHERE id = ? FOR NO KEY UPDATE", Boolean.class, recurso.id());
+            var encontrados = jdbc.queryForList(recurso.tipo().sqlTravar, Boolean.class, recurso.id());
             if (encontrados.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recurso não encontrado.");
             }
@@ -237,13 +235,24 @@ public class ReservaService {
         }
     }
 
+    /**
+     * Cada tipo carrega suas consultas completas e fixas: nenhum SQL é montado
+     * por concatenação (Sonar java:S2077). Os valores sempre vão por parâmetro.
+     */
     private enum Tipo {
-        SALA("sala"), PROFESSOR("professor"), MATERIAL("material");
+        SALA("SELECT restrito FROM sala WHERE id = ? FOR NO KEY UPDATE",
+                "SELECT em_manutencao FROM sala WHERE id = ?"),
+        PROFESSOR("SELECT restrito FROM professor WHERE id = ? FOR NO KEY UPDATE",
+                "SELECT em_manutencao FROM professor WHERE id = ?"),
+        MATERIAL("SELECT restrito FROM material WHERE id = ? FOR NO KEY UPDATE",
+                "SELECT em_manutencao FROM material WHERE id = ?");
 
-        private final String tabela;
+        private final String sqlTravar;
+        private final String sqlManutencao;
 
-        Tipo(String tabela) {
-            this.tabela = tabela;
+        Tipo(String sqlTravar, String sqlManutencao) {
+            this.sqlTravar = sqlTravar;
+            this.sqlManutencao = sqlManutencao;
         }
     }
 
