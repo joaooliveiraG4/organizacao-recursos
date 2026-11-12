@@ -13,13 +13,13 @@ A versão cumpre os 14 requisitos funcionais. Cada um tem teste automatizado rod
 
 | # | Critério | Meta | Medido | Evidência | Atende |
 |---|---|---|---|---|---|
-| C1 | Suíte completa verde no commit da tag | 0 falhas, 0 pulados | 223 testes (222 + teste do RF-05 desta entrega), 0 pulados | [CI da tag](evidencias/README.md) | sim |
+| C1 | Suíte completa verde no commit da tag | 0 falhas, 0 pulados | 224 testes (222 + 2 do RF-05 da PR #22), 0 pulados | [CI da tag](evidencias/README.md) | sim |
 | C2 | Cobertura de linhas (JaCoCo) | ≥ 80% | 98,5% | artefato `relatorios-N` do CI; [relatório](relatorio-qualidade.md) | sim |
 | C3 | Cobertura de branches (JaCoCo) | ≥ 70% | 91,7% | idem | sim |
 | C4 | Quality Gate do SonarCloud | aprovado, sem vulnerabilidade aberta | aprovado; S2077 corrigido; S4502 aceito com ADR | [SonarCloud](https://sonarcloud.io/project/overview?id=joaovictordasilvaolveira_organizacao-recursos), [ADR 0006](adr/0006-csrf-em-api-stateless.md) | sim |
 | C5 | Rastreabilidade | todo RF com risco, teste e evidência | RF-01 a RF-14 | [RTM](rtm.md) | sim |
 | C6 | Integridade sob disputa (RF-06) | 1 reserva aceita, demais `409`, 0 erro técnico | 1 `201`, 19 `409`, 0 erro, 1 alocação | [resultado-01](performance/resultado-01.md); `ReservaIntegrationTest` | sim |
-| C7 | Testes detectam defeito | mutação reprova o teste | 8 mutações manuais reprovaram (7 do relatório + RF-05 desta entrega) | [relatório](relatorio-qualidade.md), [RTM](rtm.md) RF-05 | sim |
+| C7 | Testes detectam defeito | mutação reprova o teste | 7 mutações manuais reprovaram | [relatório](relatorio-qualidade.md), [RTM](rtm.md) | sim |
 | C8 | Reprodutível por terceiro | clone limpo + README = build verde e app no ar | sim, 12/11/2026 | [checklist](entrega/checklist.md) | sim |
 | C9 | Desempenho sob carga nominal | p95 ≤ 500 ms com 50 usuários | **não medido** | — | **não** (risco R1) |
 

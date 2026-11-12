@@ -37,7 +37,7 @@ Ambiente: Windows 11, OpenJDK 21.0.7, Docker Desktop 29.8 (PostgreSQL 17 pelo `c
 Nenhum passo do README falhou no clone limpo. Os bloqueios eram de documentação:
 
 1. Não havia resultado de teste de carga nem registro de defeitos.
-2. RTM com RF-05, RF-13 e RF-14 ainda marcados "a criar", e RF-05 sem teste para professor e material.
+2. RTM com RF-05, RF-13 e RF-14 ainda marcados "a criar". O RF-05 ganhou testes de professor e material na PR #22 (Kauã).
 3. Faltava o diagrama de sequência crítica.
 4. RTM e relatório de qualidade fora dos caminhos pedidos (`docs/RTM.md`, `docs/testes/relatorio-qualidade.md`).
 5. O CI não rodava em tags, então não havia run ligado à release candidate.

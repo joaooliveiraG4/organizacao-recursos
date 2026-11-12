@@ -23,7 +23,7 @@ Primeira release candidate do sistema de organização de salas, professores e m
 
 ### Qualidade
 
-- 223 testes, 0 pulados; integração com PostgreSQL real (Testcontainers).
+- 224 testes, 0 pulados; integração com PostgreSQL real (Testcontainers).
 - Cobertura JaCoCo: 98,5% de linhas e 91,7% de branches.
 - Quality Gate do SonarCloud aprovado.
 - CI também roda em tags `v*`, para ligar a evidência à release candidate.

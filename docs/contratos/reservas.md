@@ -23,6 +23,11 @@ catálogo ainda não expõe sua configuração. Cancelar muda o estado para
 `CANCELADA` e libera as alocações na mesma transação da auditoria.
 
 A API retorna `409` por sobreposição ou por estado que impede a operação.
+Uma sobreposição ocorre quando duas reservas compartilham a mesma sala,
+professor ou material e seus períodos se cruzam. A mesma sala com horários
+consecutivos (por exemplo, 14h–16h e 16h–17h) é permitida. A restrição V6 no
+PostgreSQL protege o vínculo por tipo e ID do recurso, e a API converte a
+violação de exclusão em `409`.
 Reserva inexistente retorna `404`. Solicitante que tenta alterar ou cancelar
 uma reserva de outra pessoa recebe `403`.
 
