@@ -74,6 +74,7 @@ Relatórios:
 - [Plano de testes](docs/testes/plano-de-testes.md)
 - [Contrato da API de salas](docs/contratos/salas.md)
 - [Arquitetura](docs/arquitetura/README.md)
+- [Relatório de qualidade](docs/testes/relatorio-qualidade.md)
 - [ADR 0002 — autenticação e perfis](docs/adr/0002-autenticacao-e-perfis.md)
 - [ADR 0003 — auditoria transacional e imutável](docs/adr/0003-auditoria-transacional-e-imutavel.md)
 - [Prompts da equipe](docs/prompts-da-equipe.md)
